@@ -33,3 +33,9 @@ export interface DecisionMeasurement {
   sure_doldu: 0 | 1;
   aciklama_sn: number;
 }
+
+export interface OnboardingMeasurement {
+  oyun_no: number;
+  giris_sn: number;
+  giris_degisiklik: number;
+}

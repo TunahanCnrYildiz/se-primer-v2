@@ -1,5 +1,5 @@
 import { useState, useTransition, useRef } from 'react';
-import { Screen, Level, Role, Goal, Choice, GameChoices, ChatMessage, DecisionMeasurement } from './types';
+import { Screen, Level, Role, Goal, Choice, GameChoices, ChatMessage, DecisionMeasurement, OnboardingMeasurement } from './types';
 import { scenarioData } from './data/scenario';
 import { calculateClock, calculateTotalElapsedMinutes, getDecisionMinutes, BASE_START_MINUTES, formatTime } from './utils/time';
 import { OnboardingScreen } from './components/OnboardingScreen';
@@ -21,6 +21,12 @@ export default function App() {
   // Session id: random 8-char hex/uuid slice per game start (kept only in state)
   const [sessionId, setSessionId] = useState<string>('');
 
+  // Onboarding measurements for data collection mode
+  const [gamesStartedCount, setGamesStartedCount] = useState<number>(0);
+  const onboardingShownTimeRef = useRef<number>(performance.now());
+  const [girisDegisiklikCount, setGirisDegisiklikCount] = useState<number>(0);
+  const [currentOnboardingData, setCurrentOnboardingData] = useState<OnboardingMeasurement | null>(null);
+
   // Decision measurements for data collection mode
   const [decisionRecords, setDecisionRecords] = useState<Record<string, DecisionMeasurement>>({});
   const [tutorRequestCounts, setTutorRequestCounts] = useState<Record<string, number>>({
@@ -41,6 +47,28 @@ export default function App() {
   const [level, setLevel] = useState<Level | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [goal, setGoal] = useState<Goal | null>(null);
+
+  // Handlers for profile selection with change counting
+  const handleSelectLevel = (newLevel: Level) => {
+    if (level !== null && newLevel !== level) {
+      setGirisDegisiklikCount((prev) => prev + 1);
+    }
+    setLevel(newLevel);
+  };
+
+  const handleSelectRole = (newRole: Role) => {
+    if (role !== null && newRole !== role) {
+      setGirisDegisiklikCount((prev) => prev + 1);
+    }
+    setRole(newRole);
+  };
+
+  const handleSelectGoal = (newGoal: Goal) => {
+    if (goal !== null && newGoal !== goal) {
+      setGirisDegisiklikCount((prev) => prev + 1);
+    }
+    setGoal(newGoal);
+  };
 
   // Gameplay State
   const [decisionIndex, setDecisionIndex] = useState<number>(0);
@@ -80,6 +108,20 @@ export default function App() {
   // Start game from Onboarding
   const handleStartGame = () => {
     if (!level || !role || !goal) return;
+
+    // Record onboarding measurements
+    const nextOyunNo = gamesStartedCount + 1;
+    setGamesStartedCount(nextOyunNo);
+
+    const girisDurationSec = (performance.now() - onboardingShownTimeRef.current) / 1000;
+    const fixedGirisSn = Number(girisDurationSec.toFixed(1));
+    const fixedGirisDegisiklik = girisDegisiklikCount;
+
+    setCurrentOnboardingData({
+      oyun_no: nextOyunNo,
+      giris_sn: fixedGirisSn,
+      giris_degisiklik: fixedGirisDegisiklik,
+    });
 
     // Generate a fresh session ID for this game
     const newSessionId = typeof crypto !== 'undefined' && crypto.randomUUID
@@ -286,6 +328,11 @@ export default function App() {
     setDecisionRecords({});
     setTutorRequestCounts({ k1: 0, k2: 0, k3: 0 });
     setCurrentDecisionMeta(null);
+
+    // Reset onboarding measurements for next game
+    onboardingShownTimeRef.current = performance.now();
+    setGirisDegisiklikCount(0);
+
     startTransition(() => {
       setScreen('onboarding');
     });
@@ -295,8 +342,12 @@ export default function App() {
   const handleDownloadCsv = () => {
     if (!level || !role || !goal) return;
 
-    const header = 'surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,kaynak';
+    const header = 'surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,oyun_no,giris_sn,giris_degisiklik,kaynak';
     const levelNum = level === 'beginner' ? 0 : level === 'intermediate' ? 1 : 2;
+
+    const oyunNo = currentOnboardingData?.oyun_no ?? 1;
+    const girisSn = (currentOnboardingData?.giris_sn ?? 0).toFixed(1);
+    const girisDegisiklik = currentOnboardingData?.giris_degisiklik ?? 0;
 
     const decisionIds: Array<'k1' | 'k2' | 'k3'> = ['k1', 'k2', 'k3'];
     const rows = decisionIds.map((id, index) => {
@@ -312,7 +363,7 @@ export default function App() {
       const kararSuresi = rec.karar_suresi_sn.toFixed(1);
       const aciklamaSn = rec.aciklama_sn.toFixed(1);
 
-      return `2.0-veri,${sessionId},${sahneNo},${levelNum},${role},${goal},${kararSuresi},${rec.ipucu_acti},${rec.tutor_mesaj},${rec.secim},${rec.sure_doldu},${aciklamaSn},gercek`;
+      return `2.1-veri,${sessionId},${sahneNo},${levelNum},${role},${goal},${kararSuresi},${rec.ipucu_acti},${rec.tutor_mesaj},${rec.secim},${rec.sure_doldu},${aciklamaSn},${oyunNo},${girisSn},${girisDegisiklik},gercek`;
     });
 
     const csvContent = [header, ...rows].join('\n');
@@ -339,9 +390,9 @@ export default function App() {
             role={role}
             goal={goal}
             isDataMode={isDataMode}
-            onSelectLevel={setLevel}
-            onSelectRole={setRole}
-            onSelectGoal={setGoal}
+            onSelectLevel={handleSelectLevel}
+            onSelectRole={handleSelectRole}
+            onSelectGoal={handleSelectGoal}
             onStart={handleStartGame}
           />
         )}
