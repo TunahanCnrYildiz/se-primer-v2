@@ -139,8 +139,10 @@ KÖ-9/10'da olasılık `?p=` test kancasıyla sabitlenir: Bu testler modelin *da
 
 ## Kodlama ajanı ve araç beyanı
 
-⏳ DOLDURULACAK: kullanıcı onaylayacak. Taslak:
+Kodu elle yazmadım. Kararları ben verdim, araçların çıktısını kendim denedim ya da testlerle doğrulattım.
 
-- **Claude Code (Anthropic):** Veri hazırlama, sentetik üretici, `train.py` (eval kapısı, ONNX, model kartı), `yayinla.py`, `tests/parite.py`, Cypress testleri, FastAPI sunucusu ve belge taslakları (spec §10, README, RELEASE) bu araçla yazıldı. Hedef, eşik ve kapsam kararlarını ben verdim; ajan seçenekleri gerekçeleriyle sundu.
-- **Google AI Studio (Gemini):** Uygulama kodu (`app/`) yalnız prompt'larla üretildi ve değiştirildi (Veri Toplama Modu, giriş ölçümleri, onnxruntime-web ile çıkarım). Her prompt'tan sonra kontrol listesini yayındaki adreste kendim denedim; indirilen kod satır satır incelendi.
-- **Elle düzeltilenler:** ⏳ DOLDURULACAK
+1. **Kararlar (ben):** Modelin hedefi (bedelli seçim riski), repo ve uygulama stratejisi, bonusun hedeflenmesi benim kararım. Kabul eşiğini (ROC-AUC ≥ 0.65, B-duyarlılığı ≥ 0.60, `class_weight="balanced"`) Claude Code önerdi; gerekçesini (küçük örneklemde AUC'nin standart hatası) sorgulayarak onayladım ve eşik eğitimden önce commit'lendi. Gerçek veri toplanmadan önce model girdilerinin genişletilmesine (spec 2.1) ben izin verdim.
+2. **Claude Code (Anthropic) · eğitim, test ve yayın:** Spec §10 taslağı, veri hazırlama ve sentetik üretici, `train.py`, `yayinla.py`, `tests/parite.py`, Cypress testleri, FastAPI sunucusu, README ve RELEASE taslakları bu araçla yazıldı. AI Studio'ya verdiğim prompt'ları da o hazırladı ve AI Studio'dan indirdiğim kodu spec'e göre inceledi.
+3. **Google AI Studio (Gemini) · uygulama:** `app/` yalnız üç prompt'la değiştirildi: Veri Toplama Modu, giriş ekranı ölçümleri, onnxruntime-web ile çıkarım ve müdahale ([ai-studio-v2.md](ai-studio-v2.md)). Her prompt'tan sonra kontrol listesini yayındaki adreste kendim denedim (indirdiğim CSV'ler, ekran görüntüleri). Uygulama kodunu elle değiştirmedim.
+4. **Düzelttirdiklerim:** "Ödevin yönergelerine uyuyor muyuz?" diye sorguladığımda ajanın çıktısında iki uyumsuzluk çıktı: Cypress testleri ödevin istediği kökteki `cypress/` yerine `e2e/cypress/` altındaydı ve `train.py` tek komutla çalışmıyordu; ikisini düzelttirdim. Başlangıç reposunun rolünü sorgulamam, oradan uyarlanan kodun kaynağının README'ye yazılmasını sağladı. Ajanın verdiği Hugging Face giriş komutu PowerShell'de çalışmadı; hatayı fark edip bildirdim.
+5. **Kendim yaptıklarım ve doğrulama:** Gerçek veriyi arkadaşlarımın oyunlarıyla ben topladım; Hugging Face hesabını ve token girişini kendim yaptım. Ajanın kendi hataları (Cypress 16'da kaldırılan API, tarayıcıya bozuk giden model dosyası, işletim sistemine göre değişen SHA-256) yazdığı testler ve ölçümlerle yakalandı ve düzeltildi.
