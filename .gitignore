@@ -21,3 +21,8 @@ Thumbs.db
 *.log
 .vscode/
 .idea/
+
+# Python ortamı ve geçici çıktılar
+.venv/
+__pycache__/
+_out/

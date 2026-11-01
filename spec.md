@@ -1,6 +1,8 @@
 # SE Primer — Spesifikasyon
 
-> Sürüm: 1.0 · Tarih: 26 Ekim 2026 · Arkadaş testi işlendi (bkz. §9)
+> Sürüm: 2.0 · Tarih: 1 Kasım 2026 · v2: uyarlamalı model eklendi (bkz. §10). Eşik eğitimden önce yazıldı.
+>
+> Sürüm 1.0 (26 Ekim 2026): arkadaş testi işlendi (bkz. §9)
 >
 > İlgili belgeler: [DESIGN.md](DESIGN.md) (tasarım ve durum makinesi) · [KARARLAR.md](KARARLAR.md) (karar kaydı) · [eval/RAPOR.md](eval/RAPOR.md) (tutor değerlendirmesi)
 
@@ -23,6 +25,9 @@ Yazılım mühendisliği öğrencileri geri alma (rollback), test ve kişisel ve
 | B5 | Tutor oyunu bekletmez | Yanıt 8 sn içinde gelir, gelmezse sabit ipucu gösterilir | KÖ-7 testi |
 | B6 | Oyuncu "neden"i görür | Her karardan sonra "ne oldu / neden oldu" gösterilir, son ekranda üç kararın gerekçesi özetlenir | KÖ-3 testi |
 | B7 | Oyuncu "neden"i anlar | Oyun bittikten sonra oyuncu en az bir kararın nedenini kendi cümlesiyle açıklayabilir | Arkadaş testi (§9) |
+| B8 | Model bedelli seçimi önceden sezer | Gerçek oturumlarda ROC-AUC ≥ 0.65 ve B-duyarlılığı ≥ 0.60 (§10.4) | `train.py` eval kapısı |
+| B9 | Model her tüketicide aynı sayıyı verir | 5 referans girdide sklearn, ONNX (Python), tarayıcı ve sunucu arası fark < 1e-4 | `tests/parite.py`, Cypress parite testi |
+| B10 | v1 davranışı bozulmaz | v1'in 28 E2E testi v2 ile geçer | Cypress regresyon koşusu |
 
 **Son ölçüm (26 Ekim 2026):**
 - ✅ B1: arkadaş testinde 3 dk, takılmadan (n = 1)
@@ -291,3 +296,93 @@ Cypress testleri metne değil `data-cy` özniteliklerine bağlıdır. Liste: [DE
   - Son ekranda tutor'un oyuncuya bir yansıtma sorusu sorması ("Karar 2'de neden önce test koştun?").
   - "Diğer yolu dene" önerisi: oyuncunun seçmediği seçeneğin sonucunu göstermek.
   - B7'yi daha çok oyuncuyla ölçmek. n = 1 bir gösterge, kanıt değil.
+
+## 10. Uyarlamalı model (v2)
+
+v1'de uyum sabit kurallara dayanıyordu: seviye ipucunu ve sayacı, rol anlatıyı, hedef açıklamanın derinliğini belirliyordu. v2'de bu kurallar yerinde kalıyor. Üstüne, oyuncunun **oyun içindeki davranışından** öğrenen küçük bir model ekleniyor: Oyuncu bir sahneye girdiğinde model, bu oyuncunun o sahnede bedeli yüksek seçeneği (B) seçme olasılığını tahmin eder. Olasılık eşiği geçerse oyun, oyuncu seçimini yapmadan **önce** müdahale eder.
+
+### 10.1 Neden bu hedef
+
+- v1'in açık sorusu (B7): Oyuncu kararlarını sorgulamıyor, "neden"i okumadan geçiyor. Desteğin en çok işe yaradığı an, oyuncu yanlış kararı vermek üzereyken.
+- Etiket kendiliğinden çıkar: Her kararın sonunda oyuncunun A mı B mi seçtiği bellidir. Elle etiketleme gerekmez.
+- Müdahale geri alınabilir ve ucuzdur (ipucu, sayaç, soru). Gereksiz bir müdahalenin bedeli, kaçırılan bir riskli kararınkinden düşüktür. Bu yüzden eval, B'yi yakalama oranına (duyarlılık) ağırlık verir.
+
+### 10.2 Girdiler ve çıktı
+
+Model sahneye **girişte** bir kez çalışır. Girdiler yalnızca o ana kadar bilinen bilgilerdir. Karar anında oluşan hiçbir bilgi (bu sahnedeki tereddüt süresi, bu sahnede ipucu açılması) girdi değildir: Bunlar hem müdahaleden etkilenir hem de tahmin anında henüz yoktur (sızıntı).
+
+| # | Özellik | Tür | Anlamı |
+|---|---|---|---|
+| 1 | `seviye` | 0 / 1 / 2 | Girişteki seviye: yeni başladım / biraz deneyimliyim / deneyimliyim |
+| 2 | `sahne_no` | 1 / 2 / 3 | K1, K2, K3 |
+| 3 | `hedef_eslesir` | 0 / 1 | Oyuncunun hedefi bu sahnenin konusu mu (mimari↔K1, test↔K2, KVKK↔K3) |
+| 4 | `onceki_b_sayisi` | 0–2 | Önceki sahnelerde kaç kez B seçildi (süre dolması dahil) |
+| 5 | `onceki_karar_suresi_sn` | sn | Bir önceki sahnede seçime kadar geçen süre. K1'de 0 |
+| 6 | `onceki_ipucu_acti` | 0 / 1 | Bir önceki sahnede ipucu kartı açık mıydı (otomatik açık gelmesi dahil). K1'de 0 |
+| 7 | `onceki_tutor_mesaj` | adet | Bir önceki sahnede tutor'a giden istek sayısı. K1'de 0 |
+| 8 | `onceki_aciklama_sn` | sn | Bir önceki "ne oldu / neden oldu" ekranında kalınan süre. K1'de 0 |
+
+- **Etiket:** `secti_b` = 1, oyuncu bu sahnede B'yi seçtiyse ya da süre dolup B uygulandıysa.
+- **Çıktı:** `p` = P(`secti_b` = 1). Sıra ve adlar `model/config.json`'daki sözleşmeyle aynıdır.
+- **Model:** Küçük ve açıklanabilir bir sınıflandırıcı (ölçekleme + lojistik regresyon, `class_weight="balanced"`). `sklearn → ONNX`. Sınıf ağırlığı eğitimden önce seçildi: B azınlıkta kalırsa olasılıklar 0.50'nin altında toplanır ve B-duyarlılığı yapay olarak düşer. Girdi tensörü `input` (float32, `[n, 8]`), çıktı `probabilities` (`[n, 2]`).
+
+### 10.3 Müdahale
+
+Sahneye girişte `p ≥ 0.50` ise (eşik `config.json`'da, kodda sabit değil):
+
+| Seviye | v1 kuralı | Model müdahalesi |
+|---|---|---|
+| Yeni başladım | İpucu açık, sayaç yok | Ek olarak tutor'un yansıtma sorusu sahnenin üstünde gösterilir |
+| Biraz deneyimliyim | İpucu kapalı, sayaç yok | İpucu kartı **açık** gelir + yansıtma sorusu |
+| Deneyimliyim | İpucu kapalı, 60 sn sayaç | İpucu kartı açık gelir, **sayaç kalkar** + yansıtma sorusu |
+
+- Yansıtma sorusu, sahnenin `scenario.json`'daki ilk sabit Sokratik ipucudur. LLM çağrısı yapılmaz: Müdahale gecikmesiz ve deterministik olur.
+- `p < 0.50` ise v1 kuralları aynen geçerlidir.
+- Sahne ekranında modelin kararı görünür: `data-cy="p"` olasılığı 4 ondalıkla gösterir. Model yüklenemediyse `—` gösterir.
+
+### 10.4 Eval kapısı (kabul kriteri)
+
+Bu bölüm **eğitimden önce** yazıldı. Eşiği geçmeyen model yayınlanmaz: `train.py` hata koduyla durur ve artefakt üretmez.
+
+- **Değerlendirme verisi:** Yalnızca gerçek oturumlar (`kaynak = gercek`). Sentetik satırlar eğitime girebilir ama hiçbir ölçüme girmez.
+- **Yöntem:** Oturuma göre gruplanmış 5 katlı çapraz doğrulama (aynı oyuncunun üç kararı aynı katta kalır). Her katta model, o katın dışındaki gerçek satırlar + sentetik satırlarla eğitilir. Kat dışı tahminler birleştirilip ölçülür. Sabit `random_state`.
+- **Ön koşul:** En az 15 gerçek oturum ve en az 8 gerçek B örneği. Sağlanmazsa kapı "veri yetersiz" diyerek durur.
+
+| Metrik | Eşik | Gerekçe |
+|---|---|---|
+| ROC-AUC | **≥ 0.65** | Model oyuncuları riske göre sıralayabilmeli. 0.50 yazı-tura demek. ~45 satırda (≈13 B) AUC'nin standart hatası ≈ 0.08; 0.65, yazı-turanın yaklaşık 2 standart hata üstüdür. Daha düşük bir eşik, şanstan ayırt edilemeyen bir modeli geçirebilir. |
+| B-duyarlılığı (recall), `p ≥ 0.50` | **≥ 0.60** | Riskli kararların en az %60'ında müdahale edilmeli (bkz. 10.1). |
+| ONNX ↔ sklearn farkı | **≤ 1e-4** | Dağıtılan dosya eğitilen modelle aynı sayıyı vermeli. |
+
+- Kesinlik (precision), doğruluk ve oturumlar üzerinden bootstrap ile AUC'nin %95 güven aralığı da hesaplanıp `config.json`'a ve model kartına yazılır. Ancak bunlar kapı değildir. Yaklaşık 45 gerçek satırla güven aralığı geniş olacaktır. Bu, kartta sınır olarak yazılır.
+
+### 10.5 Veri Toplama Modu (gölge mod)
+
+- Oyuncu linki `?veri=1` ile açarsa oyun Veri Toplama Modu'nda çalışır. Oynanış v1 ile aynıdır.
+- Model bu modda çalışabilir ve `p` kaydedilir, ama **müdahale etmez**. Müdahale oyuncunun seçimini değiştirir ve etiketi bozar. Bu, gölge dağıtımın (shadow deployment) oyundaki karşılığıdır.
+- Her karar bir satırdır. Son ekranda "Verimi indir (CSV)" düğmesi çıkar. Oyuncu dosyayı kendisi gönderir. Sunucuya hiçbir şey yazılmaz.
+- KVKK: Ad, e-posta, cihaz kimliği, IP, konum toplanmaz. Oturum kimliği rastgele üretilir (`crypto.randomUUID` ilk 8 karakter). Tutor mesajlarının metni kaydedilmez, yalnızca sayısı. Sütunların anlamı: [data/SOZLUK.md](data/SOZLUK.md).
+
+### 10.6 Sürüm ve geri alma
+
+- Uygulama modeli Hugging Face'ten **commit'e sabit** URL ile indirir (`.../resolve/<commit>/model.onnx`). `main` dalına yeni dosya yüklenmesi uygulamayı değiştirmez.
+- Geri alma: Uygulamadaki commit değeri önceki sürüme çevrilir. Model tamamen kapatılmak istenirse `?model=kapali` v1 kurallarına döner. Ayrıntı: [RELEASE.md](RELEASE.md).
+
+### 10.7 Yeni kabul örnekleri
+
+**KÖ-9 · Model riskli gördüğü deneyimli oyuncunun sayacını kaldırır**
+- **Verilen:** Oyuncu "Deneyimliyim" seviyesindedir. Karar 2 ekranı açılırken model `p ≥ 0.50` döndürür.
+- **Ne zaman:** Karar 2 ekranı açılır.
+- **O zaman:** `data-cy="p"` alanında olasılık görünür. İpucu kartı açık gelir, 60 sn sayaç **görünmez**, sahnenin üstünde Karar 2'nin yansıtma sorusu gösterilir. Süre dolmadığı için B otomatik uygulanmaz.
+
+**KÖ-10 · Model riskli görmediği oyuncuya dokunmaz**
+- **Verilen:** Oyuncu "Deneyimliyim" seviyesindedir. Karar 2 ekranı açılırken model `p < 0.50` döndürür.
+- **Ne zaman:** Karar 2 ekranı açılır.
+- **O zaman:** v1 kuralları aynen geçerlidir: İpucu kartı kapalı, 60 sn sayaç işler, yansıtma sorusu yoktur. `data-cy="p"` alanında olasılık görünür.
+
+**KÖ-11 · Model yüklenemezse oyun v1 kurallarıyla devam eder**
+- **Verilen:** Hugging Face'e erişilemiyor (ağ kesik ya da dosya bulunamadı).
+- **Ne zaman:** Oyuncu oyuna başlar ve üç kararı verir.
+- **O zaman:** Oyuncuya hata gösterilmez. Her sahnede `data-cy="p"` alanı `—` gösterir ve v1 kuralları geçerlidir. Oyun 8 yoldan birinin saatine ve sonuna ulaşır.
+
+**Test notu:** KÖ-9 ve KÖ-10 *davranışı* test eder. Bu yüzden Cypress'te model kararı bir test kancasıyla sabitlenir (gerçek modelin hangi girdide eşiği geçeceği eğitime bağlıdır). Modelin *sayısal doğruluğu* ayrı test edilir: Parite testi aynı 5 referans girdiyi uygulamanın model test panelinden geçirir ve `data-cy="p"` değerini `tests/parite.json`'daki Python olasılığıyla karşılaştırır (|Δ| < 1e-4).
