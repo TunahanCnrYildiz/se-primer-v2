@@ -107,3 +107,101 @@ data-cy attribute. Do not change anything else.
 1. Sayfayı yenile, girişte seviyeyi "Yeni başladım" → "Deneyimliyim" yap, sonra rol ve hedefi seç, Başla. Oyunu bitir, CSV indir: `oyun_no=1`, `giris_degisiklik=1`, `surum=2.1-veri`, `giris_sn` saniyeyle uyumlu.
 2. "Yeniden oyna" → hiçbir şeyi değiştirmeden Başla. CSV: `oyun_no=2`, `giris_degisiklik=0`, `giris_sn` küçük (birkaç saniye).
 3. Başlık satırı birebir yukarıdaki gibi; her dosyada 3 satır, giriş sütunları üç satırda aynı.
+
+## Prompt 3 · Modelle çıkarım ve müdahale (spec §10.2–10.6)
+
+Amaç: Model sahneye girişte tarayıcıda (onnxruntime-web) çalışır, `p ≥ eşik` ise oyun müdahale eder. Model adresi tek bir sabitte durur. Kapıdan geçmiş bir model yayınlanana kadar sabit `YOK` kalır ve uygulama v1 kurallarıyla çalışır (KÖ-11). Desen, başlangıç reposundaki `web/index.html`'den uyarlandı; fark, adresin `main` yerine commit'e sabit olması.
+
+```text
+Add on-device model inference to this app with onnxruntime-web. Read all points
+before writing code. Gameplay texts, the tutor, the server, the CSV download and all
+existing data-cy attributes must stay exactly as they are. Do not change anything else.
+
+1. Dependency: add "onnxruntime-web": "1.31.1" (exact version, no ^) to package.json.
+   Import it as: import * as ort from 'onnxruntime-web';
+   Before creating any session set:
+     ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/';
+     ort.env.wasm.numThreads = 1;
+
+2. New file src/services/model.ts with these exact constants:
+     export const MODEL_REPO = 'TunahanCnr/se-primer-v2';
+     export const MODEL_COMMIT = 'YOK';
+   Base URL: `https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_COMMIT}/`
+   - loadModel(): starts once when the app starts (call it from App on mount) and is
+     cached. If MODEL_COMMIT === 'YOK' or the page URL has model=kapali, it resolves to
+     null without any network request. Otherwise it fetches base + 'config.json', then
+     creates ort.InferenceSession from base + 'model.onnx'. Any error or more than 10 s
+     → resolves to null (console.warn only, never show an error to the player).
+   - The feature ORDER and the threshold come from config.json: config.features[i].name
+     and config.decision_threshold. Never hard-code them.
+   - predictP(features: Record<string, number>): Promise<number | null>. Builds
+     new ort.Tensor('float32', Float32Array.from(config.features.map(f => features[f.name])),
+     [1, config.features.length]), runs session.run({ input: tensor }) and returns
+     Number(result.probabilities.data[1]). Returns null if the model is null.
+   - Test hook: if the page URL has p=<number between 0 and 1> (e.g. ?p=0.9), predictP
+     returns that number instead (no model needed). Used by automated tests only.
+   - Read URL parameters once at startup.
+
+3. Measurements: the per-decision measurements (karar_suresi_sn, ipucu_acti,
+   tutor_mesaj, secim, sure_doldu, aciklama_sn) and the onboarding measurements
+   (oyun_no, giris_sn, giris_degisiklik) must be tracked in EVERY mode, in memory only,
+   exactly as they are tracked today. The CSV download button stays data-mode only.
+
+4. Features, computed right before each decision screen is shown (decision index i,
+   sahne_no = i + 1). Use exactly these 11 names:
+   - seviye: 0 beginner, 1 intermediate, 2 experienced
+   - sahne_no: 1, 2, 3
+   - hedef_eslesir: 1 if (goal architecture and sahne_no 1) or (goal testing and
+     sahne_no 2) or (goal privacy and sahne_no 3), else 0
+   - tekrar_oyun: 1 if oyun_no > 1, else 0
+   - giris_sn, giris_degisiklik: the values fixed when "Başla" was pressed
+   - onceki_b_sayisi: number of earlier decisions in this game with secim "B"
+   - onceki_karar_suresi_sn, onceki_ipucu_acti, onceki_tutor_mesaj, onceki_aciklama_sn:
+     the karar_suresi_sn, ipucu_acti, tutor_mesaj, aciklama_sn of the PREVIOUS decision
+     of this game; 0 for sahne_no 1.
+   All seconds rounded to one decimal exactly like in the CSV (Number(x.toFixed(1))).
+
+5. When: for K1 inside the "Başla" handler, for K2 and K3 inside the "Devam" handler of
+   the explanation sheet. Compute the features, await predictP (wait at most 1500 ms;
+   if the model is still loading or the time is exceeded, use null), store
+   { p, mudahale } in state, THEN show the decision screen. mudahale is true only if
+   p !== null and p >= decision_threshold and data collection mode (?veri=1) is OFF.
+   In data collection mode the model still runs and p is shown, but mudahale is always
+   false (shadow mode).
+
+6. Decision screen (SceneScreen gets new props modelP: number | null, mudahale: boolean):
+   - Model line: directly under the top status bar, a small muted monospace line with
+     data-cy="p" and attributes data-p (String(p) with full precision, or "" if null)
+     and data-mudahale ("1" or "0"). Text: "MODEL · p = 0.7134" (4 decimals) or
+     "MODEL · —" when p is null.
+   - If mudahale is false: everything exactly as today (v1 rules).
+   - If mudahale is true:
+     a) the hint card starts OPEN for every level;
+     b) for "Deneyimliyim" the 60 s timer is NOT shown and NOT started, so B is never
+        applied automatically on this screen;
+     c) directly above the hint card show a card with data-cy="model-soru": small label
+        "DUR VE DÜŞÜN" (same style as the "İPUCU" label) and the text decision.hints[1]
+        (the second fixed Socratic hint of this decision). Same colors and radius as the
+        hint card, no new colors.
+
+7. Model test panel: if the page URL has model-test=1, render ONLY a simple panel
+   instead of the game (same background and fonts):
+   - title "Model test paneli" and a muted line with MODEL_REPO and MODEL_COMMIT
+   - a textarea with data-cy="model-input" where a JSON object with the 11 feature
+     names is pasted
+   - a button with data-cy="model-run" and text "Hesapla"
+   - an output with data-cy="p", data-p (full precision String(p), or "") and text
+     "p = 0.123456" (6 decimals), or "model yüklenemedi" if the model is null, or
+     "geçersiz girdi" if the JSON is invalid or a feature is missing.
+   In this panel the ?p= test hook is IGNORED: it always uses the real model.
+
+Again: do not change gameplay texts, the tutor, the server, the CSV format, styles
+outside the new elements, or any existing data-cy attribute. Do not change anything else.
+```
+
+**Kontrol listesi (yayındaki adreste):**
+1. `?p=0.9` + "Deneyimliyim": K1'de `MODEL · p = 0.9000`, ipucu kartı açık, sayaç **yok**, üstte "DUR VE DÜŞÜN" kartı.
+2. `?p=0.1` + "Deneyimliyim": `MODEL · p = 0.1000`, ipucu kapalı, 60 sn sayaç var, "DUR VE DÜŞÜN" yok.
+3. Parametresiz: `MODEL · —`, oyun v1 ile aynı (model henüz yayında değil, KÖ-11).
+4. `?veri=1&p=0.9`: `p = 0.9000` görünür ama müdahale **yok** (gölge mod). CSV biçimi değişmemiş.
+5. `?model-test=1`: panel açılır, "Hesapla" → "model yüklenemedi" (model henüz yayında değil).

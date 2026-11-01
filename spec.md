@@ -339,13 +339,15 @@ Sahneye girişte `p ≥ 0.50` ise (eşik `config.json`'da, kodda sabit değil):
 
 | Seviye | v1 kuralı | Model müdahalesi |
 |---|---|---|
-| Yeni başladım | İpucu açık, sayaç yok | Ek olarak tutor'un yansıtma sorusu sahnenin üstünde gösterilir |
+| Yeni başladım | İpucu açık, sayaç yok | Ek olarak yansıtma sorusu ipucu kartının üstünde gösterilir |
 | Biraz deneyimliyim | İpucu kapalı, sayaç yok | İpucu kartı **açık** gelir + yansıtma sorusu |
 | Deneyimliyim | İpucu kapalı, 60 sn sayaç | İpucu kartı açık gelir, **sayaç kalkar** + yansıtma sorusu |
 
-- Yansıtma sorusu, sahnenin `scenario.json`'daki ilk sabit Sokratik ipucudur. LLM çağrısı yapılmaz: Müdahale gecikmesiz ve deterministik olur.
+- Yansıtma sorusu ("DUR VE DÜŞÜN" kartı, `data-cy="model-soru"`), sahnenin `scenario.json`'daki **ikinci** sabit Sokratik ipucudur (birincisi zaten ipucu kartında). LLM çağrısı yapılmaz: Müdahale gecikmesiz ve deterministik olur.
 - `p < 0.50` ise v1 kuralları aynen geçerlidir.
-- Sahne ekranında modelin kararı görünür: `data-cy="p"` olasılığı 4 ondalıkla gösterir. Model yüklenemediyse `—` gösterir.
+- Sahne ekranında modelin kararı görünür: `data-cy="p"` olasılığı 4 ondalıkla gösterir, tam değer `data-p` özniteliğindedir (parite testi bunu okur). Model yüklenemediyse `—` gösterir.
+- **Nerede çalışır:** Tarayıcıda, `onnxruntime-web` 1.31.1 ile. Model uygulama açılırken bir kez yüklenir. Sahneye geçişte tahmin en fazla 1,5 sn beklenir; gelmezse o sahne v1 kurallarıyla açılır.
+- **Test kancaları:** `?p=0.9` modeli atlayıp olasılığı sabitler (KÖ-9/10 testleri). `?model-test=1` yalnızca model test panelini açar: 11 girdi JSON olarak verilir, `data-cy="p"` sonucu gösterir. Bu panelde `?p=` yok sayılır, her zaman gerçek model kullanılır (parite testi). `?model=kapali` modeli tamamen kapatır.
 
 ### 10.4 Eval kapısı (kabul kriteri)
 
@@ -372,7 +374,7 @@ Bu bölüm **eğitimden önce** yazıldı. Eşiği geçmeyen model yayınlanmaz:
 ### 10.5 Veri Toplama Modu (gölge mod)
 
 - Oyuncu linki `?veri=1` ile açarsa oyun Veri Toplama Modu'nda çalışır. Oynanış v1 ile aynıdır.
-- Model bu modda çalışabilir ve `p` kaydedilir, ama **müdahale etmez**. Müdahale oyuncunun seçimini değiştirir ve etiketi bozar. Bu, gölge dağıtımın (shadow deployment) oyundaki karşılığıdır.
+- Model bu modda da çalışır ve `p` ekranda görünür, ama **müdahale etmez** ve `p` CSV'ye yazılmaz (veri biçimi 2.1'de sabit kalır). Müdahale oyuncunun seçimini değiştirir ve etiketi bozar. Bu, gölge dağıtımın (shadow deployment) oyundaki karşılığıdır.
 - Her karar bir satırdır. Giriş ekranı ölçümleri (`oyun_no`, `giris_sn`, `giris_degisiklik`) oyunun üç satırına da yazılır. Son ekranda "Verimi indir (CSV)" düğmesi çıkar. Oyuncu dosyayı kendisi gönderir. Sunucuya hiçbir şey yazılmaz.
 - KVKK: Ad, e-posta, cihaz kimliği, IP, konum toplanmaz. Oturum kimliği rastgele üretilir (`crypto.randomUUID` ilk 8 karakter). Tutor mesajlarının metni kaydedilmez, yalnızca sayısı. Sütunların anlamı: [data/SOZLUK.md](data/SOZLUK.md).
 
@@ -386,7 +388,7 @@ Bu bölüm **eğitimden önce** yazıldı. Eşiği geçmeyen model yayınlanmaz:
 **KÖ-9 · Model riskli gördüğü deneyimli oyuncunun sayacını kaldırır**
 - **Verilen:** Oyuncu "Deneyimliyim" seviyesindedir. Karar 2 ekranı açılırken model `p ≥ 0.50` döndürür.
 - **Ne zaman:** Karar 2 ekranı açılır.
-- **O zaman:** `data-cy="p"` alanında olasılık görünür. İpucu kartı açık gelir, 60 sn sayaç **görünmez**, sahnenin üstünde Karar 2'nin yansıtma sorusu gösterilir. Süre dolmadığı için B otomatik uygulanmaz.
+- **O zaman:** `data-cy="p"` alanında olasılık görünür. İpucu kartı açık gelir, 60 sn sayaç **görünmez**, ipucu kartının üstünde "DUR VE DÜŞÜN" kartında Karar 2'nin ikinci sabit ipucu gösterilir. Süre dolmadığı için B otomatik uygulanmaz.
 
 **KÖ-10 · Model riskli görmediği oyuncuya dokunmaz**
 - **Verilen:** Oyuncu "Deneyimliyim" seviyesindedir. Karar 2 ekranı açılırken model `p < 0.50` döndürür.
