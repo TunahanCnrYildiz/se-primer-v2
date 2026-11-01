@@ -1,0 +1,18 @@
+# Render Blueprint: sunucu tüketicisi (ücretsiz plan). MODEL_COMMIT, yayınlanan Hugging Face
+# commit'idir (model/yayin.json); Render panelinde girilir, geri almak için önceki commit yazılır.
+services:
+  - type: web
+    name: se-primer-v2-api
+    runtime: python
+    plan: free
+    rootDir: sunucu
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.5"
+      - key: MODEL_REPO
+        value: TunahanCnr/se-primer-v2
+      - key: MODEL_COMMIT
+        sync: false

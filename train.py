@@ -270,8 +270,10 @@ Hepsi sahneye girişte bilinen bilgilerdir. Bu sahnedeki karar süresi ya da ipu
 Tüketiciler modeli commit'e sabit URL ile indirir:
 
 ```
-https://huggingface.co/<kullanici>/se-primer-v2/resolve/<commit>/model.onnx
+https://huggingface.co/TunahanCnr/se-primer-v2/resolve/<commit>/model.onnx
 ```
+
+Yayınlanan commit, etiket (`v{c["version"]}`) ve geri alma: GitHub reposundaki `RELEASE.md`.
 
 Kaynak kod, eğitim ve testler: https://github.com/TunahanCnrYildiz/se-primer-v2
 """

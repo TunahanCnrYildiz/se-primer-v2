@@ -1,0 +1,5 @@
+# Sunucu tüketicisi (Render). Çıkarım sürümleri eğitimle aynı (onnxruntime, numpy).
+fastapi==0.162.0
+uvicorn==0.54.0
+onnxruntime==1.31.1
+numpy==2.5.4

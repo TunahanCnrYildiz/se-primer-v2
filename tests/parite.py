@@ -4,8 +4,8 @@
     python tests/parite.py             # parite.json'ı yeniden hesapla ve karşılaştır
     python tests/parite.py --sunucu https://<render-adresi>   # sunucu tüketicisini de karşılaştır
 
-Model kaynağı, öncelik sırasıyla: --model (yerel yol ya da URL) → model/config.json'daki
-yayın bilgisi (Hugging Face, commit'e sabit URL) → model/model.onnx.
+Model kaynağı, öncelik sırasıyla: --model (yerel yol ya da URL) → model/yayin.json'daki
+commit'e sabit Hugging Face URL'si (yayinla.py yazar) → model/model.onnx.
 
 Diferansiyel test: Aynı girdiye iki bağımsız tüketicinin (Python onnxruntime ↔ tarayıcıda
 onnxruntime-web, Cypress; ↔ FastAPI sunucusu) verdiği olasılık farkı TOLERANS'ı aşamaz.
@@ -57,11 +57,10 @@ REFERANSLAR = [
 def model_kaynagi(verilen: str | None) -> str:
     if verilen:
         return verilen
-    config = KOK / "model" / "config.json"
-    if config.exists():
-        yayin = json.loads(config.read_text(encoding="utf-8")).get("release")
-        if yayin:
-            return yayin["model_url"]
+    yayin = KOK / "model" / "yayin.json"
+    if yayin.exists():
+        return json.loads(yayin.read_text(encoding="utf-8"))["model_url"]
+    if (KOK / "model" / "model.onnx").exists():
         return str(KOK / "model" / "model.onnx")
     sys.exit("✗ model bulunamadı: --model verin ya da önce train.py ile model/ üretin")
 
