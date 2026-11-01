@@ -7,6 +7,7 @@ interface OnboardingScreenProps {
   level: Level | null;
   role: Role | null;
   goal: Goal | null;
+  isDataMode?: boolean;
   onSelectLevel: (level: Level) => void;
   onSelectRole: (role: Role) => void;
   onSelectGoal: (goal: Goal) => void;
@@ -17,6 +18,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   level,
   role,
   goal,
+  isDataMode = false,
   onSelectLevel,
   onSelectRole,
   onSelectGoal,
@@ -231,6 +233,14 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
         <p className="font-mono text-[12px] text-[#5B6275] text-center mb-3">
           {progressText}
         </p>
+        {isDataMode && (
+          <p
+            data-cy="veri-notu"
+            className="font-sans text-[12px] leading-[18px] text-[#5B6275] text-center mb-3"
+          >
+            Veri Toplama Modu: Ad, e-posta, cihaz ve konum bilgisi toplanmaz. Kararların yalnızca sen indirip gönderirsen paylaşılır.
+          </p>
+        )}
         <button
           type="button"
           data-cy="start"

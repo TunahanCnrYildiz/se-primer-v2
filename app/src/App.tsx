@@ -1,5 +1,5 @@
-import { useState, useTransition } from 'react';
-import { Screen, Level, Role, Goal, Choice, GameChoices, ChatMessage } from './types';
+import { useState, useTransition, useRef } from 'react';
+import { Screen, Level, Role, Goal, Choice, GameChoices, ChatMessage, DecisionMeasurement } from './types';
 import { scenarioData } from './data/scenario';
 import { calculateClock, calculateTotalElapsedMinutes, getDecisionMinutes, BASE_START_MINUTES, formatTime } from './utils/time';
 import { OnboardingScreen } from './components/OnboardingScreen';
@@ -11,6 +11,28 @@ import { askTutor } from './services/tutor';
 
 export default function App() {
   const [, startTransition] = useTransition();
+
+  // Data Collection Mode: ON only if URL has ?veri=1 at startup
+  const [isDataMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('veri') === '1';
+  });
+
+  // Session id: random 8-char hex/uuid slice per game start (kept only in state)
+  const [sessionId, setSessionId] = useState<string>('');
+
+  // Decision measurements for data collection mode
+  const [decisionRecords, setDecisionRecords] = useState<Record<string, DecisionMeasurement>>({});
+  const [tutorRequestCounts, setTutorRequestCounts] = useState<Record<string, number>>({
+    k1: 0,
+    k2: 0,
+    k3: 0,
+  });
+  const [currentDecisionMeta, setCurrentDecisionMeta] = useState<{
+    decisionDurationSec: number;
+    hintOpened: 0 | 1;
+  } | null>(null);
+  const explanationStartTimeRef = useRef<number>(0);
 
   // Navigation State
   const [screen, setScreen] = useState<Screen>('onboarding');
@@ -58,6 +80,16 @@ export default function App() {
   // Start game from Onboarding
   const handleStartGame = () => {
     if (!level || !role || !goal) return;
+
+    // Generate a fresh session ID for this game
+    const newSessionId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).substring(2, 10);
+    setSessionId(newSessionId);
+    setDecisionRecords({});
+    setTutorRequestCounts({ k1: 0, k2: 0, k3: 0 });
+    setCurrentDecisionMeta(null);
+
     setChoices({});
     setViolation(false);
     setDecisionIndex(0);
@@ -73,9 +105,22 @@ export default function App() {
   };
 
   // Called when player selects option A or B (or 60s timeout fires option B)
-  const handleSelectChoice = (choice: Choice, isTimeout: boolean) => {
+  const handleSelectChoice = (
+    choice: Choice,
+    isTimeout: boolean,
+    measurements?: { decisionDurationSec: number; hintOpened: 0 | 1 }
+  ) => {
     setCurrentChoice(choice);
     setTimedOut(isTimeout);
+
+    if (measurements) {
+      setCurrentDecisionMeta(measurements);
+    } else {
+      setCurrentDecisionMeta({
+        decisionDurationSec: 0,
+        hintOpened: level === 'beginner' ? 1 : 0,
+      });
+    }
 
     // Record choice
     const updatedChoices: GameChoices = {
@@ -88,14 +133,32 @@ export default function App() {
       setViolation(true);
     }
 
+    explanationStartTimeRef.current = performance.now();
     setIsExplanationOpen(true);
   };
 
   // Called when player clicks "Devam →" in ExplanationSheet
   const handleContinueFromExplanation = () => {
+    const explanationDurationSec = (performance.now() - explanationStartTimeRef.current) / 1000;
+
+    const record: DecisionMeasurement = {
+      karar_suresi_sn: currentDecisionMeta ? Number(currentDecisionMeta.decisionDurationSec.toFixed(1)) : 0,
+      ipucu_acti: currentDecisionMeta ? currentDecisionMeta.hintOpened : (level === 'beginner' ? 1 : 0),
+      tutor_mesaj: tutorRequestCounts[currentDecision.id] || 0,
+      secim: currentChoice || 'A',
+      sure_doldu: timedOut ? 1 : 0,
+      aciklama_sn: Number(explanationDurationSec.toFixed(1)),
+    };
+
+    setDecisionRecords((prev) => ({
+      ...prev,
+      [currentDecision.id]: record,
+    }));
+
     setIsExplanationOpen(false);
     setCurrentChoice(null);
     setTimedOut(false);
+    setCurrentDecisionMeta(null);
 
     if (decisionIndex < scenarioData.decisions.length - 1) {
       // Advance to next decision
@@ -111,6 +174,12 @@ export default function App() {
   // Tutor handlers
   const handleRequestTutorHint = async () => {
     if (isTutorLoading || !level || !role) return;
+
+    // Track tutor request count for current decision
+    setTutorRequestCounts((prev) => ({
+      ...prev,
+      [currentDecision.id]: (prev[currentDecision.id] || 0) + 1,
+    }));
 
     setIsTutorLoading(true);
     const currentCounter = hintCounters[currentDecision.id] || 0;
@@ -147,6 +216,12 @@ export default function App() {
 
   const handleSendTutorMessage = async (userText: string) => {
     if (isTutorLoading || !level || !role) return;
+
+    // Track tutor request count for current decision
+    setTutorRequestCounts((prev) => ({
+      ...prev,
+      [currentDecision.id]: (prev[currentDecision.id] || 0) + 1,
+    }));
 
     const nowMinutes = BASE_START_MINUTES + calculateTotalElapsedMinutes(choices);
     const timeFormatted = formatTime(nowMinutes);
@@ -208,9 +283,48 @@ export default function App() {
     setIsTutorOpen(false);
     setTutorMessages([]);
     setHintCounters({ k1: 0, k2: 0, k3: 0 });
+    setDecisionRecords({});
+    setTutorRequestCounts({ k1: 0, k2: 0, k3: 0 });
+    setCurrentDecisionMeta(null);
     startTransition(() => {
       setScreen('onboarding');
     });
+  };
+
+  // CSV download handler for data collection mode
+  const handleDownloadCsv = () => {
+    if (!level || !role || !goal) return;
+
+    const header = 'surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,kaynak';
+    const levelNum = level === 'beginner' ? 0 : level === 'intermediate' ? 1 : 2;
+
+    const decisionIds: Array<'k1' | 'k2' | 'k3'> = ['k1', 'k2', 'k3'];
+    const rows = decisionIds.map((id, index) => {
+      const sahneNo = index + 1;
+      const rec = decisionRecords[id] || {
+        karar_suresi_sn: 0,
+        ipucu_acti: 0,
+        tutor_mesaj: 0,
+        secim: 'A',
+        sure_doldu: 0,
+        aciklama_sn: 0,
+      };
+      const kararSuresi = rec.karar_suresi_sn.toFixed(1);
+      const aciklamaSn = rec.aciklama_sn.toFixed(1);
+
+      return `2.0-veri,${sessionId},${sahneNo},${levelNum},${role},${goal},${kararSuresi},${rec.ipucu_acti},${rec.tutor_mesaj},${rec.secim},${rec.sure_doldu},${aciklamaSn},gercek`;
+    });
+
+    const csvContent = [header, ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `primer-${sessionId}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const finalClock = calculateClock(choices);
@@ -224,6 +338,7 @@ export default function App() {
             level={level}
             role={role}
             goal={goal}
+            isDataMode={isDataMode}
             onSelectLevel={setLevel}
             onSelectRole={setRole}
             onSelectGoal={setGoal}
@@ -278,6 +393,8 @@ export default function App() {
             clock={finalClock}
             mttr={finalMttr}
             userGoal={goal}
+            isDataMode={isDataMode}
+            onDownloadData={handleDownloadCsv}
             onReplay={handleReplay}
           />
         )}

@@ -9,7 +9,11 @@ interface SceneScreenProps {
   k1Choice?: Choice;
   profile: PlayerProfile;
   clock: string;
-  onSelectChoice: (choice: Choice, timedOut: boolean) => void;
+  onSelectChoice: (
+    choice: Choice,
+    timedOut: boolean,
+    measurements?: { decisionDurationSec: number; hintOpened: 0 | 1 }
+  ) => void;
   onOpenTutor: () => void;
 }
 
@@ -34,6 +38,8 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
   const [isHintOpen, setIsHintOpen] = useState<boolean>(profile.level === 'beginner');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const decisionShownTimeRef = useRef<number>(performance.now());
+  const hasHintBeenOpenedRef = useRef<boolean>(profile.level === 'beginner');
 
   // Reset timer & selection when decision changes
   useEffect(() => {
@@ -42,6 +48,9 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
     setTimeLeft(60);
     setAriaAnnouncement('');
     setIsHintOpen(profile.level === 'beginner');
+
+    decisionShownTimeRef.current = performance.now();
+    hasHintBeenOpenedRef.current = profile.level === 'beginner';
 
     if (profile.level === 'experienced') {
       timerRef.current = setInterval(() => {
@@ -85,9 +94,17 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
     setSelectedChoice(choice);
     setIsProcessing(true);
 
+    const selectionTime = performance.now();
+    const durationMs = selectionTime - decisionShownTimeRef.current;
+    const durationSec = durationMs / 1000;
+    const hintOpened: 0 | 1 = hasHintBeenOpenedRef.current ? 1 : 0;
+
     // After 300ms, trigger explanation sheet
     setTimeout(() => {
-      onSelectChoice(choice, timedOut);
+      onSelectChoice(choice, timedOut, {
+        decisionDurationSec: durationSec,
+        hintOpened,
+      });
     }, 300);
   };
 
@@ -248,7 +265,15 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
         >
           <button
             type="button"
-            onClick={() => setIsHintOpen((prev) => !prev)}
+            onClick={() => {
+              setIsHintOpen((prev) => {
+                const next = !prev;
+                if (next) {
+                  hasHintBeenOpenedRef.current = true;
+                }
+                return next;
+              });
+            }}
             className="w-full px-4 py-3 flex items-center justify-between text-left cursor-pointer hover:bg-[#F2EEE6]/30 transition-colors"
           >
             <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-tight">

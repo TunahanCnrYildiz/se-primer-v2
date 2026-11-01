@@ -24,3 +24,12 @@ export interface ChatMessage {
   text: string;
   time: string;
 }
+
+export interface DecisionMeasurement {
+  karar_suresi_sn: number;
+  ipucu_acti: 0 | 1;
+  tutor_mesaj: number;
+  secim: Choice;
+  sure_doldu: 0 | 1;
+  aciklama_sn: number;
+}

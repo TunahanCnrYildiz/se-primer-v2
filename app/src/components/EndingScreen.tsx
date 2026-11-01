@@ -10,6 +10,8 @@ interface EndingScreenProps {
   clock: string;
   mttr: number;
   userGoal: Goal;
+  isDataMode?: boolean;
+  onDownloadData?: () => void;
   onReplay: () => void;
 }
 
@@ -19,6 +21,8 @@ export const EndingScreen: React.FC<EndingScreenProps> = ({
   clock,
   mttr,
   userGoal,
+  isDataMode = false,
+  onDownloadData,
   onReplay,
 }) => {
   const endingType = violation ? 'B' : 'A';
@@ -282,6 +286,25 @@ export const EndingScreen: React.FC<EndingScreenProps> = ({
           <RotateCcw className="w-4 h-4 stroke-[2.5]" />
           <span>{scenarioData.endings.replayButton}</span>
         </button>
+
+        {isDataMode && onDownloadData && (
+          <>
+            <button
+              type="button"
+              data-cy="veri-indir"
+              onClick={onDownloadData}
+              className="w-full h-[48px] mt-3 rounded-[12px] bg-[#FFFDF8] text-[#14213D] border border-[#D9D3C7] font-sans text-[15px] font-medium flex items-center justify-center gap-2 cursor-pointer hover:bg-[#F2EEE6] active:translate-y-[1px] transition-all shadow-subtle"
+            >
+              <span>Verimi indir (CSV)</span>
+            </button>
+            <p
+              data-cy="veri-tesekkur"
+              className="font-sans text-[12px] leading-[18px] text-[#5B6275] text-center mt-2.5"
+            >
+              Dosyayı oyunu sana gönderen kişiye ilet. Teşekkürler!
+            </p>
+          </>
+        )}
 
         <p className="font-mono text-[11px] text-[#5B6275] text-center mt-3 uppercase tracking-wider">
           SE PRIMER · POST-MORTEM DOSYASI INC-9402

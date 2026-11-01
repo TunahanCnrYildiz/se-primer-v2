@@ -1,6 +1,6 @@
 {
-  "name": "SE Primer",
-  "description": "Bir sağlık sisteminde üç karar vererek nöbet deneyimi yaşatan mobil öncelikli interaktif yazılım mühendisliği senaryosu.",
+  "name": "SE Primer v2",
+  "description": "Bir sağlık sisteminde üç karar vererek nöbet deneyimi yaşatan mobil öncelikli interaktif yazılım mühendisliği senaryosu. v2: oyuncunun davranışından öğrenen küçük bir model, riskli kararlardan önce ipucu ve tutor desteğini ayarlar.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
