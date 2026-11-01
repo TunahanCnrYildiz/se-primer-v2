@@ -23,11 +23,14 @@ KVKK: Ad, e-posta, cihaz kimliği, IP ve konum hiçbir dosyada yoktur. `oturum` 
 | 1 | `seviye` | 0 / 1 / 2 | Girişteki seviye: 0 = Yeni başladım, 1 = Biraz deneyimliyim, 2 = Deneyimliyim |
 | 2 | `sahne_no` | 1 / 2 / 3 | Karar: 1 = K1 Mimari, 2 = K2 Test, 3 = K3 KVKK |
 | 3 | `hedef_eslesir` | 0 / 1 | Oyuncunun hedefi bu sahnenin konusu mu (Mimari↔1, Test↔2, KVKK↔3) |
-| 4 | `onceki_b_sayisi` | adet, 0–2 | Bu oyunda önceki sahnelerde kaç kez B seçildi (süre dolması dahil) |
-| 5 | `onceki_karar_suresi_sn` | saniye | Bir önceki sahnede, ekran açılışından seçime kadar geçen süre. Sahne 1'de 0 |
-| 6 | `onceki_ipucu_acti` | 0 / 1 | Bir önceki sahnede ipucu kartı herhangi bir anda açık mıydı ("Yeni başladım"da hep 1). Sahne 1'de 0 |
-| 7 | `onceki_tutor_mesaj` | adet | Bir önceki sahnede tutor'a giden istek sayısı ("İpucu iste" + yazılan mesaj). Sahne 1'de 0 |
-| 8 | `onceki_aciklama_sn` | saniye | Bir önceki "ne oldu / neden oldu" ekranının açılışından "Devam"a kadar geçen süre. Sahne 1'de 0 |
+| 4 | `tekrar_oyun` | 0 / 1 | Bu sekmede "Yeniden oyna" ile başlayan oyun mu (`oyun_no > 1`) |
+| 5 | `giris_sn` | saniye, 1 ondalık | Giriş ekranının açılışından "Başla"ya kadar geçen süre. Tekrar oyunda cevaplar seçili geldiği için kısadır |
+| 6 | `giris_degisiklik` | adet | Giriş ekranında, değeri olan bir cevabın başka bir seçenekle değiştirilme sayısı. İlk seçim ve aynı seçeneğe tekrar dokunmak sayılmaz |
+| 7 | `onceki_b_sayisi` | adet, 0–2 | Bu oyunda önceki sahnelerde kaç kez B seçildi (süre dolması dahil) |
+| 8 | `onceki_karar_suresi_sn` | saniye | Bir önceki sahnede, ekran açılışından seçime kadar geçen süre. Sahne 1'de 0 |
+| 9 | `onceki_ipucu_acti` | 0 / 1 | Bir önceki sahnede ipucu kartı herhangi bir anda açık mıydı ("Yeni başladım"da hep 1). Sahne 1'de 0 |
+| 10 | `onceki_tutor_mesaj` | adet | Bir önceki sahnede tutor'a giden istek sayısı ("İpucu iste" + yazılan mesaj). Sahne 1'de 0 |
+| 11 | `onceki_aciklama_sn` | saniye | Bir önceki "ne oldu / neden oldu" ekranının açılışından "Devam"a kadar geçen süre. Sahne 1'de 0 |
 
 ### Etiket
 
@@ -43,6 +46,7 @@ Bu sütunlar karar anında ya da sonrasında oluşur. Tahmin anında bilinmezler
 |---|---|---|
 | `rol` | `backend` \| `devops` \| `qa` | Girişteki rol (yalnızca anlatıyı değiştirir) |
 | `hedef` | `architecture` \| `testing` \| `privacy` | Girişteki hedef |
+| `oyun_no` | adet, 1'den başlar | Bu sekmede kaçıncı oyun (`tekrar_oyun` buradan türetilir) |
 | `karar_suresi_sn` | saniye, 1 ondalık | Bu sahnede ekran açılışından seçime kadar geçen süre (`performance.now()`) |
 | `ipucu_acti` | 0 / 1 | Bu sahnede ipucu kartı herhangi bir anda açık mıydı |
 | `tutor_mesaj` | adet | Bu sahnede tutor'a giden istek sayısı |
@@ -51,13 +55,14 @@ Bu sütunlar karar anında ya da sonrasında oluşur. Tahmin anında bilinmezler
 
 ## `data/ham/*.csv` (Veri Toplama Modu çıktısı)
 
-Başlık: `surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,kaynak`
+Başlık: `surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,oyun_no,giris_sn,giris_degisiklik,kaynak`
 
 Yukarıdakilerden farklı olan sütunlar:
 
 | Sütun | Anlamı |
 |---|---|
-| `surum` | Kaydı üreten uygulama sürümü (`2.0-veri`) |
+| `surum` | Kaydı üreten uygulama sürümü (`2.1-veri`). Giriş ölçümleri olmayan `2.0-veri` dosyaları kabul edilmez |
+| `giris_sn`, `giris_degisiklik` | Oyunun üç satırında da aynı değer |
 | `secim` | `A` \| `B`. `oturumlar.csv`'de `secti_b`'ye dönüşür |
 
 `hazirla.py` her ham dosyayı doğrular: Başlık birebir aynı olmalı, 3 satır (sahne 1, 2, 3) bulunmalı, `kaynak = gercek` olmalı, değerler tanımlı aralıkta kalmalı, süre dolduysa seçim B olmalı. Bozuk dosyada betik durur. Aynı oturum iki kez gönderildiyse bir kez sayılır.

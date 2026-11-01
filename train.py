@@ -57,6 +57,9 @@ OZELLIK_TANIMI = {
     "seviye": ("Girişteki seviye: 0 yeni başladım, 1 biraz deneyimli, 2 deneyimli", "kategori", 0, 2),
     "sahne_no": ("Karar: 1 mimari, 2 test, 3 KVKK", "kategori", 1, 3),
     "hedef_eslesir": ("Oyuncunun hedefi bu sahnenin konusu mu", "0/1", 0, 1),
+    "tekrar_oyun": ("Bu sekmede 'Yeniden oyna' ile başlayan oyun mu", "0/1", 0, 1),
+    "giris_sn": ("Giriş ekranında 'Başla'ya kadar geçen süre", "saniye", 0, None),
+    "giris_degisiklik": ("Giriş ekranında verilen cevabın değiştirilme sayısı", "adet", 0, None),
     "onceki_b_sayisi": ("Önceki sahnelerde B seçilme sayısı", "adet", 0, 2),
     "onceki_karar_suresi_sn": ("Önceki sahnede seçime kadar geçen süre (sahne 1'de 0)", "saniye", 0, None),
     "onceki_ipucu_acti": ("Önceki sahnede ipucu kartı açık mıydı (sahne 1'de 0)", "0/1", 0, 1),
@@ -115,7 +118,7 @@ def metrikler(y: np.ndarray, p: np.ndarray, gruplar: np.ndarray) -> dict:
 
 # --------------------------------------------------------------------------- paketleme
 def onnx_aktar(model, X: np.ndarray, hedef: Path) -> float:
-    """Girdi 'input' float32 [n, 8], çıktı 'probabilities' [n, 2] (zipmap kapalı)."""
+    """Girdi 'input' float32 [n, özellik sayısı], çıktı 'probabilities' [n, 2] (zipmap kapalı)."""
     onx = to_onnx(model, initial_types=[("input", FloatTensorType([None, len(OZELLIKLER)]))],
                   options={id(model): {"zipmap": False}}, target_opset=17)
     hedef.write_bytes(onx.SerializeToString())
@@ -248,7 +251,7 @@ Hepsi sahneye girişte bilinen bilgilerdir. Bu sahnedeki karar süresi ya da ipu
 
 - Ölçüm küçük bir örneklemde yapıldı. Güven aralığı geniştir; tek bir sayıya güvenmeyin.
 - Oyuncular ders arkadaşlarıdır (yazılım mühendisliği öğrencileri). Başka bir kitleye genellenmez.
-- "Yeniden oyna" ile gelen oyunlarda oyuncu senaryoyu önceden bilir; davranışı ilk oyundan farklıdır.
+- "Yeniden oyna" ile gelen oyunlarda oyuncu senaryoyu bilir ve B'yi bilerek seçebilir (kötü sonu görmek için). `tekrar_oyun` bunu girdi olarak taşır; bu oyunlarda yüksek `p` "risk" değil "keşif" anlamına gelebilir.
 - Sentetik üreticinin kuralı modelin öğrendiğini etkiler. Bu yüzden ölçüm yalnız gerçek veride yapılır.
 - Model nedensellik söylemez: B seçimini *öngörür*, nedenini açıklamaz.
 

@@ -66,3 +66,44 @@ data-cy attribute. Do not change anything else.
 2. `?veri=1` ile bir yol oyna. İndirilen CSV'de başlık + 3 satır olmalı. `kaynak` = `gercek`.
 3. "Deneyimliyim" ile K3'te süreyi doldur: K3 satırında `secim=B`, `sure_doldu=1`, `karar_suresi_sn` ≈ 60.
 4. "Yeniden oyna" → yeni oyun yeni `oturum` kimliği almalı.
+
+## Prompt 2 · Giriş ekranı ölçümleri (spec 2.1)
+
+Amaç: K1'den önce bilinen üç sinyali de kaydetmek (spec §10.2, girdi 4–6). Gerçek veri toplanmadan önce gönderildi.
+
+```text
+Extend the data collection mode (?veri=1) with three onboarding measurements.
+Gameplay, texts, timings, styles and all existing data-cy attributes must stay exactly
+as they are. Outside data collection mode nothing changes. Do not change anything else.
+
+1. oyun_no: an in-memory counter of games started in this browser tab. The first
+   "Başla" after the page loads is 1; every later "Başla" (after "Yeniden oyna")
+   adds 1. Keep it only in React state (no localStorage, no cookies, no server).
+
+2. giris_sn: seconds from the moment the onboarding screen is shown (on page load,
+   and again each time "Yeniden oyna" returns to it) until "Başla" is pressed.
+   Use performance.now(). One decimal.
+
+3. giris_degisiklik: on the current onboarding screen, count how many times the
+   player changes an answer that already had a value to a DIFFERENT option
+   (level, role or goal). Selecting the first answer of a question does not count.
+   Tapping the already-selected option does not count. After "Yeniden oyna" the
+   previous answers are pre-selected, so changing one of them counts. Reset to 0
+   each time the onboarding screen is shown.
+
+4. The values are fixed when "Başla" is pressed and written on all 3 rows of that
+   game's CSV. Change the CSV header to exactly:
+
+   surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,oyun_no,giris_sn,giris_degisiklik,kaynak
+
+   and change the constant surum value from "2.0-veri" to "2.1-veri". giris_sn uses
+   one decimal with "." as decimal separator. Keep every other column exactly as now.
+
+Again: do not change gameplay, texts, styles, the tutor, the server, or any existing
+data-cy attribute. Do not change anything else.
+```
+
+**Kontrol listesi (yayındaki adreste, `?veri=1` ile):**
+1. Sayfayı yenile, girişte seviyeyi "Yeni başladım" → "Deneyimliyim" yap, sonra rol ve hedefi seç, Başla. Oyunu bitir, CSV indir: `oyun_no=1`, `giris_degisiklik=1`, `surum=2.1-veri`, `giris_sn` saniyeyle uyumlu.
+2. "Yeniden oyna" → hiçbir şeyi değiştirmeden Başla. CSV: `oyun_no=2`, `giris_degisiklik=0`, `giris_sn` küçük (birkaç saniye).
+3. Başlık satırı birebir yukarıdaki gibi; her dosyada 3 satır, giriş sütunları üç satırda aynı.

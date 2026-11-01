@@ -27,12 +27,15 @@ SEED = 13
 SENTETIK_OTURUM = 100
 
 HAM_SUTUNLAR = ["surum", "oturum", "sahne_no", "seviye", "rol", "hedef", "karar_suresi_sn",
-                "ipucu_acti", "tutor_mesaj", "secim", "sure_doldu", "aciklama_sn", "kaynak"]
+                "ipucu_acti", "tutor_mesaj", "secim", "sure_doldu", "aciklama_sn",
+                "oyun_no", "giris_sn", "giris_degisiklik", "kaynak"]
+OYUN_SABITLERI = ["oturum", "seviye", "rol", "hedef", "oyun_no", "giris_sn", "giris_degisiklik"]
 ROLLER = {"backend", "devops", "qa"}
 HEDEF_SAHNE = {"architecture": 1, "testing": 2, "privacy": 3}  # hedefin konusu olan sahne
 
-OZELLIKLER = ["seviye", "sahne_no", "hedef_eslesir", "onceki_b_sayisi", "onceki_karar_suresi_sn",
-              "onceki_ipucu_acti", "onceki_tutor_mesaj", "onceki_aciklama_sn"]
+OZELLIKLER = ["seviye", "sahne_no", "hedef_eslesir", "tekrar_oyun", "giris_sn", "giris_degisiklik",
+              "onceki_b_sayisi", "onceki_karar_suresi_sn", "onceki_ipucu_acti", "onceki_tutor_mesaj",
+              "onceki_aciklama_sn"]
 HEDEF = "secti_b"
 
 
@@ -45,12 +48,14 @@ def ham_dosya_oku(yol: Path) -> pd.DataFrame:
     else:
         if len(df) != 3 or sorted(df["sahne_no"]) != [1, 2, 3]:
             hatalar.append("tam 3 satır (sahne 1, 2, 3) olmalı")
-        if df["oturum"].nunique() != 1:
-            hatalar.append("dosyada birden çok oturum var")
+        if (df[OYUN_SABITLERI].nunique() != 1).any():
+            hatalar.append("oturum, profil ve giriş ölçümleri oyun boyunca sabit olmalı")
         if not set(df["kaynak"]) <= {"gercek"}:
             hatalar.append("kaynak yalnız 'gercek' olmalı")
-        if not set(df["seviye"]) <= {0, 1, 2} or df["seviye"].nunique() != 1:
-            hatalar.append("seviye 0/1/2 ve oyun boyunca sabit olmalı")
+        if not set(df["seviye"]) <= {0, 1, 2}:
+            hatalar.append("seviye 0/1/2 olmalı")
+        if (df["oyun_no"] < 1).any() or (df[["giris_sn", "giris_degisiklik"]] < 0).any().any():
+            hatalar.append("oyun_no >= 1, giriş ölçümleri >= 0 olmalı")
         if not set(df["rol"]) <= ROLLER or not set(df["hedef"]) <= set(HEDEF_SAHNE):
             hatalar.append("rol ya da hedef tanımsız")
         if not set(df["secim"]) <= {"A", "B"}:
@@ -85,6 +90,9 @@ def sentetik_veri(n_oturum: int = SENTETIK_OTURUM, seed: int = SEED) -> pd.DataF
     karar verir, ipucunu ve tutor'u daha az açar, açıklamayı daha kısa okur ve B'yi daha
     sık seçer. Bu sahnede ipucunu açmak ve hedefin bu sahnenin konusu olması B olasılığını
     düşürür. Deneyimli oyuncuda karar 60 sn'yi aşarsa süre dolar ve B uygulanır.
+    Oyunların %35'i "Yeniden oyna"dır: oyuncu senaryoyu bilir, girişi hızlı geçer (cevaplar
+    seçili gelir) ve B'yi daha sık seçer (kötü sonu görmek için). Riskli oyuncu giriş
+    ekranını hızlı geçer ve cevabını daha az değiştirir.
     """
     rng = np.random.default_rng(seed)
     sahne_etkisi = {1: 0.2, 2: 0.4, 3: -0.4}
@@ -95,20 +103,25 @@ def sentetik_veri(n_oturum: int = SENTETIK_OTURUM, seed: int = SEED) -> pd.DataF
         rol = str(rng.choice(sorted(ROLLER)))
         hedef = str(rng.choice(list(HEDEF_SAHNE)))
         r = rng.normal()
+        tekrar = rng.random() < 0.35
+        oyun_no = int(2 + rng.poisson(0.3)) if tekrar else 1
+        giris_sn = float(rng.lognormal(np.log(4) if tekrar else np.log(20) - 0.3 * r, 0.5))
+        giris_degisiklik = int(rng.poisson(0.4 if tekrar else np.exp(-0.8 - 0.4 * r)))
         onceki_b = 0
         for sahne in (1, 2, 3):
             ipucu = 1 if seviye == 0 else int(rng.random() < _sigmoid(-0.2 - 0.8 * r))
             tutor = int(rng.poisson(np.exp(-1.0 - 0.5 * r)))
             sure = float(rng.lognormal(np.log(25) - 0.35 * r - 0.15 * seviye, 0.4))
             logit = (-1.1 + 0.9 * r + sahne_etkisi[sahne] - 0.6 * (HEDEF_SAHNE[hedef] == sahne)
-                     - 0.5 * ipucu + 0.3 * onceki_b)
+                     - 0.5 * ipucu + 0.3 * onceki_b + 0.8 * tekrar)
             secim = "B" if rng.random() < _sigmoid(logit) else "A"
             doldu = 0
             if seviye == 2 and sure >= 60:
                 sure, secim, doldu = 60.0, "B", 1
             aciklama = float(rng.lognormal(np.log(12) - 0.4 * r, 0.5))
-            satirlar.append(["2.0-sentetik", oturum, sahne, seviye, rol, hedef, round(sure, 1), ipucu,
-                             tutor, secim, doldu, round(aciklama, 1), "sentetik"])
+            satirlar.append(["2.1-sentetik", oturum, sahne, seviye, rol, hedef, round(sure, 1), ipucu,
+                             tutor, secim, doldu, round(aciklama, 1), oyun_no, round(giris_sn, 1),
+                             giris_degisiklik, "sentetik"])
             onceki_b += secim == "B"
     return pd.DataFrame(satirlar, columns=HAM_SUTUNLAR)
 
@@ -126,6 +139,7 @@ def ozellik_turet(ham: pd.DataFrame) -> pd.DataFrame:
     df = ham.sort_values(["kaynak", "oturum", "sahne_no"]).reset_index(drop=True)
     df["secti_b"] = (df["secim"] == "B").astype(int)
     df["hedef_eslesir"] = (df["hedef"].map(HEDEF_SAHNE) == df["sahne_no"]).astype(int)
+    df["tekrar_oyun"] = (df["oyun_no"] > 1).astype(int)
     oyun = df.groupby(["kaynak", "oturum"], sort=False)
     df["onceki_b_sayisi"] = oyun["secti_b"].cumsum() - df["secti_b"]
     for kaynak_sutun, ozellik in [("karar_suresi_sn", "onceki_karar_suresi_sn"),
@@ -134,7 +148,8 @@ def ozellik_turet(ham: pd.DataFrame) -> pd.DataFrame:
                                   ("aciklama_sn", "onceki_aciklama_sn")]:
         df[ozellik] = oyun[kaynak_sutun].shift(1).fillna(0).astype(df[kaynak_sutun].dtype)
     sutunlar = (["oturum", "kaynak"] + OZELLIKLER + [HEDEF] +
-                ["rol", "hedef", "karar_suresi_sn", "ipucu_acti", "tutor_mesaj", "aciklama_sn", "sure_doldu"])
+                ["rol", "hedef", "oyun_no", "karar_suresi_sn", "ipucu_acti", "tutor_mesaj", "aciklama_sn",
+                 "sure_doldu"])
     return df[sutunlar]
 
 

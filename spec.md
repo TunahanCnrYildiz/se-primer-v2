@@ -1,6 +1,8 @@
 # SE Primer — Spesifikasyon
 
-> Sürüm: 2.0 · Tarih: 1 Kasım 2026 · v2: uyarlamalı model eklendi (bkz. §10). Eşik eğitimden önce yazıldı.
+> Sürüm: 2.1 · Tarih: 1 Kasım 2026 · Gerçek veri toplanmadan önce 3 girdi eklendi ve kapı geçilemezse ne olacağı yazıldı (§10.2, §10.4). **Eşik değişmedi.**
+>
+> Sürüm 2.0 (1 Kasım 2026): uyarlamalı model eklendi (bkz. §10). Eşik eğitimden önce yazıldı.
 >
 > Sürüm 1.0 (26 Ekim 2026): arkadaş testi işlendi (bkz. §9)
 >
@@ -316,15 +318,20 @@ Model sahneye **girişte** bir kez çalışır. Girdiler yalnızca o ana kadar b
 | 1 | `seviye` | 0 / 1 / 2 | Girişteki seviye: yeni başladım / biraz deneyimliyim / deneyimliyim |
 | 2 | `sahne_no` | 1 / 2 / 3 | K1, K2, K3 |
 | 3 | `hedef_eslesir` | 0 / 1 | Oyuncunun hedefi bu sahnenin konusu mu (mimari↔K1, test↔K2, KVKK↔K3) |
-| 4 | `onceki_b_sayisi` | 0–2 | Önceki sahnelerde kaç kez B seçildi (süre dolması dahil) |
-| 5 | `onceki_karar_suresi_sn` | sn | Bir önceki sahnede seçime kadar geçen süre. K1'de 0 |
-| 6 | `onceki_ipucu_acti` | 0 / 1 | Bir önceki sahnede ipucu kartı açık mıydı (otomatik açık gelmesi dahil). K1'de 0 |
-| 7 | `onceki_tutor_mesaj` | adet | Bir önceki sahnede tutor'a giden istek sayısı. K1'de 0 |
-| 8 | `onceki_aciklama_sn` | sn | Bir önceki "ne oldu / neden oldu" ekranında kalınan süre. K1'de 0 |
+| 4 | `tekrar_oyun` | 0 / 1 | Bu sekmede "Yeniden oyna" ile başlayan oyun mu |
+| 5 | `giris_sn` | sn | Giriş ekranının açılışından "Başla"ya kadar geçen süre |
+| 6 | `giris_degisiklik` | adet | Giriş ekranında verilmiş bir cevabın başka bir seçenekle değiştirilme sayısı |
+| 7 | `onceki_b_sayisi` | 0–2 | Önceki sahnelerde kaç kez B seçildi (süre dolması dahil) |
+| 8 | `onceki_karar_suresi_sn` | sn | Bir önceki sahnede seçime kadar geçen süre. K1'de 0 |
+| 9 | `onceki_ipucu_acti` | 0 / 1 | Bir önceki sahnede ipucu kartı açık mıydı (otomatik açık gelmesi dahil). K1'de 0 |
+| 10 | `onceki_tutor_mesaj` | adet | Bir önceki sahnede tutor'a giden istek sayısı. K1'de 0 |
+| 11 | `onceki_aciklama_sn` | sn | Bir önceki "ne oldu / neden oldu" ekranında kalınan süre. K1'de 0 |
+
+**2.1'de eklenen 4–6 numaralı girdiler:** 2.0'daki 8 girdiyle K1'de modelin elinde yalnızca profil vardı. Sentetik veriyle yapılan boru hattı denemesinde (gerçek veri yokken) AUC 0.58 çıktı. Bu sayı sentetik üreticinin kuralına bağlıdır ve kanıt değildir; ama sahneye girişteki sinyalin zayıf olabileceğini gösterdi. Eklenen üç girdi, K1'den önce bilinen ve ödevin önerdiği davranış sinyallerini taşır: tekrar oynama, girişte acele/okuma, girişte karar değiştirme. Değişiklik **gerçek veri toplanmadan önce** yapıldı. Eşik ve değerlendirme yöntemi (§10.4) değişmedi.
 
 - **Etiket:** `secti_b` = 1, oyuncu bu sahnede B'yi seçtiyse ya da süre dolup B uygulandıysa.
 - **Çıktı:** `p` = P(`secti_b` = 1). Sıra ve adlar `model/config.json`'daki sözleşmeyle aynıdır.
-- **Model:** Küçük ve açıklanabilir bir sınıflandırıcı (ölçekleme + lojistik regresyon, `class_weight="balanced"`). `sklearn → ONNX`. Sınıf ağırlığı eğitimden önce seçildi: B azınlıkta kalırsa olasılıklar 0.50'nin altında toplanır ve B-duyarlılığı yapay olarak düşer. Girdi tensörü `input` (float32, `[n, 8]`), çıktı `probabilities` (`[n, 2]`).
+- **Model:** Küçük ve açıklanabilir bir sınıflandırıcı (ölçekleme + lojistik regresyon, `class_weight="balanced"`). `sklearn → ONNX`. Sınıf ağırlığı eğitimden önce seçildi: B azınlıkta kalırsa olasılıklar 0.50'nin altında toplanır ve B-duyarlılığı yapay olarak düşer. Girdi tensörü `input` (float32, `[n, 11]`), çıktı `probabilities` (`[n, 2]`).
 
 ### 10.3 Müdahale
 
@@ -356,11 +363,17 @@ Bu bölüm **eğitimden önce** yazıldı. Eşiği geçmeyen model yayınlanmaz:
 
 - Kesinlik (precision), doğruluk ve oturumlar üzerinden bootstrap ile AUC'nin %95 güven aralığı da hesaplanıp `config.json`'a ve model kartına yazılır. Ancak bunlar kapı değildir. Yaklaşık 45 gerçek satırla güven aralığı geniş olacaktır. Bu, kartta sınır olarak yazılır.
 
+**Kapı geçilemezse** (2.1'de, gerçek veriden önce yazıldı):
+
+1. v2.0 reddedilir: `model/` klasörüne yazılmaz, Hugging Face'e yüklenmez. Ölçülen metrikler ve güven aralığı `RELEASE.md`'ye "reddedilen sürüm" olarak yazılır.
+2. Uygulama v1 kurallarıyla çalışmaya devam eder (KÖ-11'deki davranış).
+3. Daha fazla gerçek oturum toplanır ve **aynı kapıyla, aynı yöntemle** yeniden denenir. Eşik, girdiler, model türü ve sentetik üretici, gerçek veri görüldükten sonra kapıyı geçmek için değiştirilmez. Bunlardan biri değişirse yeni sürüm olarak spec'e gerekçesiyle yazılır ve ölçüm yeni toplanan verilerle yapılır.
+
 ### 10.5 Veri Toplama Modu (gölge mod)
 
 - Oyuncu linki `?veri=1` ile açarsa oyun Veri Toplama Modu'nda çalışır. Oynanış v1 ile aynıdır.
 - Model bu modda çalışabilir ve `p` kaydedilir, ama **müdahale etmez**. Müdahale oyuncunun seçimini değiştirir ve etiketi bozar. Bu, gölge dağıtımın (shadow deployment) oyundaki karşılığıdır.
-- Her karar bir satırdır. Son ekranda "Verimi indir (CSV)" düğmesi çıkar. Oyuncu dosyayı kendisi gönderir. Sunucuya hiçbir şey yazılmaz.
+- Her karar bir satırdır. Giriş ekranı ölçümleri (`oyun_no`, `giris_sn`, `giris_degisiklik`) oyunun üç satırına da yazılır. Son ekranda "Verimi indir (CSV)" düğmesi çıkar. Oyuncu dosyayı kendisi gönderir. Sunucuya hiçbir şey yazılmaz.
 - KVKK: Ad, e-posta, cihaz kimliği, IP, konum toplanmaz. Oturum kimliği rastgele üretilir (`crypto.randomUUID` ilk 8 karakter). Tutor mesajlarının metni kaydedilmez, yalnızca sayısı. Sütunların anlamı: [data/SOZLUK.md](data/SOZLUK.md).
 
 ### 10.6 Sürüm ve geri alma
