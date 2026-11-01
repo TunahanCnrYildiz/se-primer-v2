@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "cypress run --spec \"cypress/e2e/paths.cy.js,cypress/e2e/acceptance.cy.js,cypress/e2e/personalization.cy.js\"",
+    "test": "npm run test:regresyon && npm run test:yollar && npm run test:v2",
+    "test:regresyon": "cypress run --spec \"cypress/e2e/paths.cy.js,cypress/e2e/acceptance.cy.js,cypress/e2e/personalization.cy.js\" --expose MODEL_P=0",
+    "test:yollar": "cypress run --spec cypress/e2e/paths.cy.js",
+    "test:v2": "cypress run --spec \"cypress/e2e/model.cy.js,cypress/e2e/parite.cy.js\"",
     "demo": "cypress run --browser chrome --config-file cypress.demo.config.js",
     "open": "cypress open"
   },

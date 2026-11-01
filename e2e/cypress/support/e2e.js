@@ -7,6 +7,33 @@ beforeEach(() => {
     statusCode: 200,
     body: { text: 'İki yolun da riskini nasıl kıyaslarsın?', model: 'stub' },
   }).as('tutor');
+
+  // YEREL_MODEL=<klasör>: uygulamanın Hugging Face'ten istediği config.json ve model.onnx,
+  // bu klasördeki dosyalarla yanıtlanır. Model yayınlanmadan önce tarayıcıdaki çıkarımı
+  // denemek içindir; yayından sonra testler gerçek, commit'e sabit URL'yi kullanır.
+  const yerel = Cypress.expose('YEREL_MODEL');
+  if (yerel) {
+    cy.readFile(`${yerel}/config.json`).then((config) => {
+      cy.intercept('GET', 'https://huggingface.co/**/config.json', { body: config });
+    });
+    // İkili dosya fixture olarak ve kodlamasız (",null") verilmeli; body ile verilirse
+    // metne çevrilir ve onnxruntime "protobuf parsing failed" der.
+    // Fixture yolu cypress/fixtures'a göredir; YEREL_MODEL ise e2e/ klasörüne göre.
+    cy.intercept('GET', 'https://huggingface.co/**/model.onnx', {
+      fixture: `../../${yerel}/model.onnx,null`,
+      headers: { 'content-type': 'application/octet-stream' },
+    });
+  }
+});
+
+// MODEL_P=<sayı>: her cy.visit adrese ?p=<sayı> ekler (spec §10.3 test kancası).
+// Regresyon koşusu MODEL_P=0 ile çalışır: model "risk yok" der, v1 kuralları geçerli kalır.
+Cypress.Commands.overwrite('visit', (visit, url, options) => {
+  const p = Cypress.expose('MODEL_P');
+  if (p !== undefined && typeof url === 'string' && !/[?&]p=/.test(url)) {
+    url += `${url.includes('?') ? '&' : '?'}p=${p}`;
+  }
+  return visit(url, options);
 });
 
 Cypress.Commands.add('getCy', (name, options) => cy.get(cy$(name), options));
