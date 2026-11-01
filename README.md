@@ -115,7 +115,8 @@ KÖ-9/10'da olasılık `?p=` test kancasıyla sabitlenir: Bu testler modelin *da
 ├── app/                    AI Studio uygulaması (React + Vite + Express + onnxruntime-web)
 ├── ai-studio-v2.md         AI Studio'ya gönderilen v2 prompt'ları ve kontrol listeleri
 ├── SINAV_TASARIMI.md       vize sorusu tasarımı
-└── (v1'den) DESIGN.md, KARARLAR.md, content/, design/, eval/, ai-studio-rehber.md
+├── KARARLAR.md             karar kaydı (v2: K-24 … K-35)
+└── (v1'den) DESIGN.md, content/, design/, eval/, ai-studio-rehber.md
 ```
 
 `app/` AI Studio'dan indirildi ve elle değiştirilmedi; her değişiklik [ai-studio-v2.md](ai-studio-v2.md)'deki bir prompt'la yapıldı ve kontrol listesiyle doğrulandı.
@@ -139,7 +140,7 @@ KÖ-9/10'da olasılık `?p=` test kancasıyla sabitlenir: Bu testler modelin *da
 
 ## Kodlama ajanı ve araç beyanı
 
-Kodu elle yazmadım. Kararları ben verdim, araçların çıktısını kendim denedim ya da testlerle doğrulattım.
+Projeyi ben yönettim: hedefi, kabul kapısını ve kapsamı ben belirledim, araçların çıktısını kendim denedim ya da testlerle doğrulattım. Kodu ve belge taslaklarını araçlar yazdı. Kararların gerekçeleri ve vazgeçilen seçenekler [KARARLAR.md](KARARLAR.md#v2--uyarlamalı-model) (K-24 … K-35).
 
 1. **Kararlar (ben):** Modelin hedefi (bedelli seçim riski), repo ve uygulama stratejisi, bonusun hedeflenmesi benim kararım. Kabul eşiğini (ROC-AUC ≥ 0.65, B-duyarlılığı ≥ 0.60, `class_weight="balanced"`) Claude Code önerdi; gerekçesini (küçük örneklemde AUC'nin standart hatası) sorgulayarak onayladım ve eşik eğitimden önce commit'lendi. Gerçek veri toplanmadan önce model girdilerinin genişletilmesine (spec 2.1) ben izin verdim.
 2. **Claude Code (Anthropic) · eğitim, test ve yayın:** Spec §10 taslağı, veri hazırlama ve sentetik üretici, `train.py`, `yayinla.py`, `tests/parite.py`, Cypress testleri, FastAPI sunucusu, README ve RELEASE taslakları bu araçla yazıldı. AI Studio'ya verdiğim prompt'ları da o hazırladı ve AI Studio'dan indirdiğim kodu spec'e göre inceledi. `SINAV_TASARIMI.md`'deki senaryo kendi yaşadığım bir olay; ölçümleri ve kavramlara verdiğim cevapları ben kurdum, Claude Code ile tartışarak netleştirdim ve yazıya döktürdüm.

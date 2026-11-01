@@ -2,7 +2,7 @@
 
 Bu projede verilen önemli kararlar, gerekçeleri ve vazgeçilen seçenekler. Kod AI Studio'da üretildiği için "neden böyle?" sorusunun cevabı koddan çıkmaz, buradadır.
 
-Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Nerede**. Tarihlerin hepsi 26 Ekim 2026.
+Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Nerede**. K-01 … K-23 (v1) 26 Ekim 2026, K-24 ve sonrası (v2, uyarlamalı model) 1 Kasım 2026.
 
 ## Ürün ve senaryo
 
@@ -130,3 +130,71 @@ Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Ner
 ### K-21 · `esbuild` sürümü `^0.27`
 - **Karar:** `app/package.json`'da `esbuild` `^0.25`'ten `^0.27`'ye çekildi (AI Studio'da da).
 - **Gerekçe:** Eski aralık Vite 8 ile çakışıyor ve AI Studio dışında `npm install`'ı durduruyordu. `--force` ile geçiştirmek yerine sürüm düzeltildi.
+
+## v2 · Uyarlamalı model
+
+### K-24 · Hedef: "Bu oyuncu bu sahnede bedeli yüksek seçeneği (B) seçecek mi?"
+- **Karar:** Model, oyuncu bir sahneye girdiğinde B'yi seçme olasılığını tahmin eder. Etiket (`secti_b`) oyunun kendisinden çıkar.
+- **Gerekçe:** v1'in açık sorusu B7: Oyuncu kararlarını sorgulamıyor. Desteğin en çok işe yaradığı an, bedelli bir kararı vermek üzere olduğu an. Her karar bir etiket verdiği için 15 oturum yaklaşık 45 örnek eder ve elle etiketleme gerekmez.
+- **Vazgeçilen:** "İpucuna ihtiyacı var mı?" (başlangıç reposunun örneği; ödev kopyalanmamasını istiyor). "Kötü sona gidecek mi?" (oturum başına tek etiket; 15 oturum yalnız 15 örnek).
+- **Nerede:** [spec.md §10.1](spec.md#101-neden-bu-hedef)
+
+### K-25 · Model sahneye girişte çalışır; o sahnede oluşan hiçbir bilgi girdi değildir
+- **Karar:** Girdiler yalnız sahneye girmeden önce bilinenlerdir (profil, giriş ekranı, önceki sahneler). Bu sahnedeki tereddüt süresi ya da ipucu açılması girdi değildir.
+- **Gerekçe:** Bu bilgiler tahmin anında henüz yoktur ve müdahaleden etkilenir (sızıntı). Ayrıca müdahale oyuncu seçmeden önce gelmelidir.
+- **Vazgeçilen:** Sahnenin ortasında, bekleme süresiyle ikinci bir tahmin. Veri biçimini ve uygulamayı karmaşıklaştırıyor, hızlı karar veren oyuncuya hiç ulaşmıyor.
+- **Nerede:** [spec.md §10.2](spec.md#102-girdiler-ve-çıktı)
+
+### K-26 · Kabul kapısı eğitimden önce: ROC-AUC ≥ 0.65, B-duyarlılığı ≥ 0.60
+- **Karar:** Ölçüm yalnız gerçek oturumlarda, oturuma göre gruplanmış 5 katlı çapraz doğrulamayla. `class_weight="balanced"` de eğitimden önce sabitlendi. Commit `227eb23`.
+- **Gerekçe:** ~45 satırda (≈13 B) AUC'nin standart hatası ≈ 0.08; 0.65, yazı-turanın (0.50) yaklaşık iki standart hata üstü. B-duyarlılığı, çünkü gereksiz bir ipucunun bedeli kaçırılan riskli bir kararınkinden düşük. Sınıf ağırlığı sonradan eklenseydi "kapıyı geçmek için ayarlandı" anlamına gelirdi.
+- **Vazgeçilen:** AUC ≥ 0.60 (şanstan ayırt edilemeyen bir modeli geçirebilir). Küçük örneklem riskini eşiği düşürerek değil, daha çok oturum toplayarak azaltmak seçildi.
+- **Nerede:** [spec.md §10.4](spec.md#104-eval-kapısı-kabul-kriteri) · [train.py](train.py)
+
+### K-27 · Spec 2.1: gerçek veriden önce üç yeni girdi; kapı geçilemezse ne olacağı önceden yazıldı
+- **Bağlam:** Boru hattı sentetik veriyle denendiğinde AUC 0.58 çıktı; K1'de modelin elinde yalnız profil vardı. Arkadaşlar henüz oynamamıştı.
+- **Karar:** `tekrar_oyun`, `giris_sn`, `giris_degisiklik` eklendi (K1'den önce bilinen davranış sinyalleri). Kapı geçilemezse sürüm reddedilir, uygulama v1 kurallarıyla sürer, aynı kapıyla daha çok veri toplanır. Eşik değişmedi. Commit `fb0675b`.
+- **Gerekçe:** Girdi değişikliği ancak gerçek veri görülmeden meşrudur. Başarısızlık yolunu önceden yazmak, sonuçtan sonra kuralı eğmeyi engeller.
+- **Vazgeçilen:** Sentetik üreticinin katsayılarını kapıyı geçecek şekilde değiştirmek; eşiği düşürmek. İkisi de ölçümü kendi lehine eğmek olurdu.
+- **Nerede:** [spec.md §10.2, §10.4](spec.md#10-uyarlamalı-model-v2)
+
+### K-28 · Veri Toplama Modu: tarayıcıda CSV, sunucuya veri yok, gölge mod
+- **Karar:** `?veri=1` ile her karar bir satır kaydedilir; oyuncu dosyayı son ekranda kendisi indirip gönderir. Bu modda model çalışır ama müdahale etmez.
+- **Gerekçe:** KVKK: Sunucuya hiçbir şey yazılmaz, oturum kimliği rastgele, tutor mesajının metni değil yalnız sayısı tutulur. Müdahale oyuncunun seçimini değiştireceği için modelin öğreneceği etiketi bozar; gölge mod bunu önler.
+- **Vazgeçilen:** Verileri sunucuda toplamak (KVKK yükü, v1'in "sunucuya veri yazılmaz" ilkesiyle çelişki).
+- **Nerede:** [spec.md §10.5](spec.md#105-veri-toplama-modu-gölge-mod) · [data/SOZLUK.md](data/SOZLUK.md)
+
+### K-29 · Yeni repo (v1 geçmişiyle) ve AI Studio'da Remix
+- **Karar:** v2 `se-primer-v2` reposunda, v1'in commit geçmişinin üstünde. Uygulama, v1 projesinin AI Studio Remix kopyası (`se-primer-v2.ai.studio`).
+- **Gerekçe:** v1 notlandırılmadan önce eski repo ve yayındaki uygulama değişmemeli. Geçmişi taşımak, v2'nin v1'in üstüne nasıl kurulduğunu gösteriyor.
+- **Vazgeçilen:** v1 reposunda dal açmak; geçmişsiz yeni repo.
+
+### K-30 · Çıkarım tarayıcıda; sunucu ikinci tüketici (bonus); mobil yok
+- **Karar:** Model onnxruntime-web ile tarayıcıda çalışır. FastAPI sunucusu (Render) aynı modeli üçüncü tüketici olarak çalıştırır.
+- **Gerekçe:** Ağ yalnız ilk açılışta gerekir, davranış verisi cihazdan çıkmaz; modelin gizli kalması gerekmiyor. Sunucu, parite testinin bağımsız bir çalışma zamanında da tuttuğunu gösteriyor.
+- **Vazgeçilen:** Expo ile cihaz içi model: ayrı kod tabanı ve dağıtım, bu senaryoda karşılığı olmayan bir maliyet.
+- **Nerede:** [RELEASE.md](RELEASE.md#mimari-dağıtım-kararı-ve-ödünleşim-matrisi)
+
+### K-31 · Kapıdan geçmemiş model hiçbir yere yayınlanmaz, geliştirme sürümü de
+- **Karar:** Sentetik veriyle eğitilen geliştirme modeli Hugging Face'e yüklenmedi. AI Studio'da `MODEL_COMMIT = 'YOK'` kaldı; müdahale `?p=` test kancasıyla, tarayıcıdaki çıkarım ise Cypress'te Hugging Face isteği yerel dosyaya yönlendirilerek denendi. `yayinla.py` kapıdan geçmemiş modeli reddeder.
+- **Gerekçe:** "Eşiği geçmeyen model yayınlanmaz" kuralı geliştirme kolaylığı için de esnetilmemeli.
+- **Vazgeçilen:** Geliştirme modelini ayrı bir Hugging Face reposuna "deneme" etiketiyle koymak.
+
+### K-32 · Regresyon iki biçimde: v1 testleri `p = 0` ile, 8 yol gerçek modelle
+- **Karar:** v1'in 28 testi model kararı "risk yok"a sabitlenerek koşar; 8 yol testi ayrıca gerçek modelle koşar.
+- **Gerekçe:** v1 testleri v1 kurallarını sınıyor; model müdahale ederse (ör. sayaç kalkarsa) bu testlerin bozulması beklenen bir davranış değişikliğidir, hata değil. 8 yol ise müdahale olsa da olmasa da aynı saat ve sonla bitmeli; "yeni modelle kırılmadan geçer" şartının anlamlı karşılığı bu.
+- **Vazgeçilen:** v1 testlerini modeli tamamen kapatarak koşmak (v2'nin kod yolu hiç çalışmazdı).
+- **Nerede:** [package.json](package.json) · [cypress/](cypress/)
+
+### K-33 · Yansıtma sorusu sabit ipucundan, LLM'den değil
+- **Karar:** Müdahaledeki "dur ve düşün" sorusu sahnenin ikinci sabit Sokratik ipucudur (birincisi zaten ipucu kartında).
+- **Gerekçe:** v1'de tutor isteklerinin ~%25'i 7 sn bütçesine takılıyordu. Müdahale sahne açılırken gecikmesiz ve deterministik olmalı.
+
+### K-34 · Ödev yapısına uyum: `cypress/` kökte, `train.py` tek komut
+- **Bağlam:** Repo, ödevin istediği yapıyla madde madde karşılaştırıldı.
+- **Karar:** Testler `e2e/cypress/`'ten kökteki `cypress/`'e taşındı (bkz. K-17). `train.py` veri hazırlamayı kendisi çağırır; `python train.py` tek başına yeter.
+- **Gerekçe:** Ödev her ikisini de açıkça istiyor; küçük bir yapı farkı bile değerlendirmede eksik sayılabilir.
+
+### K-35 · Parite için iki tarafta aynı çalışma zamanı sürümü
+- **Karar:** Tarayıcıda onnxruntime-web 1.31.1, Python ve sunucuda onnxruntime 1.31.1; tolerans 1e-4.
+- **Gerekçe:** Farkın kaynağı sürüm farkı değil yalnız platform (float32, WebAssembly) olsun. Tolerans sıfır değil, çünkü ondalıklı sayılarda farklı çalışma zamanları birebir aynı biti üretmek zorunda değil.
