@@ -1,5 +1,5 @@
 // spec.md §3: anlatı profile göre uyarlanır. Rol sahne metnini, hedef genişletilmiş notu ve okuma önerisini belirler.
-import scenario from '../../../content/scenario.json';
+import scenario from '../../content/scenario.json';
 
 const [k1, k2, k3] = scenario.decisions;
 const ROLES = ['backend', 'devops', 'qa'];

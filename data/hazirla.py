@@ -1,5 +1,7 @@
 """Ham oyun kayıtlarından eğitim verisini (data/oturumlar.csv) üretir.
 
+train.py her çalıştığında bunu ilk adım olarak çağırır. Tek başına da çalışır:
+
     python data/hazirla.py
 
 1. data/ham/*.csv: Veri Toplama Modu'nun indirdiği dosyalar (her dosya bir oyun,

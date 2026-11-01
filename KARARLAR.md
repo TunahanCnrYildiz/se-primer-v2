@@ -103,6 +103,7 @@ Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Ner
 ### K-17 · Cypress testleri `e2e/` klasöründe, uygulamadan ayrı
 - **Karar:** Testler `app/` içine değil, kendi `package.json`'ı olan `e2e/` klasörüne yazıldı.
 - **Gerekçe:** `app/` AI Studio'dan her indirildiğinde baştan değiştiriliyor. Testler orada olsaydı her güncellemede kaybolurdu.
+- **v2 (1 Kasım 2026):** Testler `e2e/cypress/`'ten repo kökündeki `cypress/`'e taşındı (`package.json` ve `cypress.config.js` de köke). Gerekçe: Ödevin istediği repo yapısında `cypress/` kökte. `app/`'ten ayrı olma gerekçesi aynen geçerli.
 
 ### K-18 · Testlerde LLM yerine sahte yanıt, demoda gerçek yanıt
 - **Karar:** Testler `/api/tutor`'u `cy.intercept` ile sahte bir yanıta bağlar. Demo videosu ise gerçek Gemini yanıtını gösterir.

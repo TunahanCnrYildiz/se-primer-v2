@@ -1,8 +1,10 @@
 """SE Primer v2 — "bu oyuncu bu sahnede B'yi seçecek mi?" modeli: eğit, ölç, kapıdan geçir, paketle.
 
-    python data/hazirla.py      # data/ham/*.csv + sentetik → data/oturumlar.csv
-    python train.py             # eval kapısı; geçerse model/ (model.onnx, config.json, README.md)
+    python train.py               # tek komut: veriyi hazırla → eğit → ölç → kapı → model/
     python train.py --gelistirme  # gerçek veri yokken boru hattını sentetikle dener → _out/gelistirme (YAYINLANMAZ)
+
+İlk adımda data/hazirla.py çalışır: data/ham/*.csv (gerçek) + sentetik → data/oturumlar.csv.
+Aynı ham dosyalarla her seferinde bayt bayt aynı dosya üretilir.
 
 Eval kapısı spec §10.4'te, eğitimden önce yazıldı (commit 227eb23):
   - yalnız gerçek oturumlarda, oturuma göre gruplanmış 5 katlı çapraz doğrulama
@@ -38,6 +40,7 @@ sys.stderr.reconfigure(encoding="utf-8")
 
 BURASI = Path(__file__).resolve().parent
 sys.path.insert(0, str(BURASI / "data"))
+import hazirla  # noqa: E402
 from hazirla import HEDEF, OZELLIKLER  # noqa: E402  (özellik sırasının tek kaynağı)
 
 VERI = BURASI / "data" / "oturumlar.csv"
@@ -281,6 +284,7 @@ def main():
                     help="gerçek veri yokken boru hattını sentetikle dene (çıktı _out/gelistirme, yayınlanmaz)")
     args = ap.parse_args()
 
+    hazirla.main()  # data/ham/*.csv + sentetik → data/oturumlar.csv
     veri = pd.read_csv(VERI, dtype={"oturum": str})
     gercek, sentetik = veri[veri["kaynak"] == "gercek"], veri[veri["kaynak"] == "sentetik"]
     veri_ozeti = {

@@ -21,8 +21,8 @@ Yazılım mühendisliği öğrencileri geri alma (rollback), test ve kişisel ve
 | # | Ölçüt | Hedef | Nasıl ölçülür |
 |---|---|---|---|
 | B1 | Telefonda baştan sona oynanır | Arkadaş testinde oyuncu yardım almadan, 10 dk içinde bir son ekranına ulaşır | Arkadaş testi (§9) |
-| B2 | Karar mantığı doğrudur | 8 yolun hepsi §4'teki saat ve sonla biter | `e2e/cypress/e2e/paths.cy.js`, 8/8 |
-| B3 | Kabul örnekleri sağlanır | KÖ-1 … KÖ-8'in hepsi geçer | `e2e/cypress/e2e/acceptance.cy.js` |
+| B2 | Karar mantığı doğrudur | 8 yolun hepsi §4'teki saat ve sonla biter | `cypress/e2e/paths.cy.js`, 8/8 |
+| B3 | Kabul örnekleri sağlanır | KÖ-1 … KÖ-8'in hepsi geçer | `cypress/e2e/acceptance.cy.js` |
 | B4 | Tutor cevabı ele vermez | 20 öğrenci mesajında ele verme oranı ≤ %20 | [eval/RAPOR.md](eval/RAPOR.md) |
 | B5 | Tutor oyunu bekletmez | Yanıt 8 sn içinde gelir, gelmezse sabit ipucu gösterilir | KÖ-7 testi |
 | B6 | Oyuncu "neden"i görür | Her karardan sonra "ne oldu / neden oldu" gösterilir, son ekranda üç kararın gerekçesi özetlenir | KÖ-3 testi |

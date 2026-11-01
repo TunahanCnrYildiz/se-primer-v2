@@ -18,7 +18,7 @@ beforeEach(() => {
     });
     // İkili dosya fixture olarak ve kodlamasız (",null") verilmeli; body ile verilirse
     // metne çevrilir ve onnxruntime "protobuf parsing failed" der.
-    // Fixture yolu cypress/fixtures'a göredir; YEREL_MODEL ise e2e/ klasörüne göre.
+    // Fixture yolu cypress/fixtures'a göredir; YEREL_MODEL ise repo köküne göre.
     cy.intercept('GET', 'https://huggingface.co/**/model.onnx', {
       fixture: `../../${yerel}/model.onnx,null`,
       headers: { 'content-type': 'application/octet-stream' },

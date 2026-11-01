@@ -2,9 +2,9 @@
 // girdiyi verir, olasılık farkı toleransın altında kalmalıdır. Beklenen değerler
 // tests/parite.json'dan gelir (python tests/parite.py --uret). Uygulama tarafı model test
 // panelidir (?model-test=1); panel ?p= test kancasını yok sayar, her zaman gerçek modeli çalıştırır.
-const PARITE = '../tests/parite.json';
+const PARITE = 'tests/parite.json';
 // Ölçülen farklar kanıt olarak buraya yazılır (RELEASE.md bu dosyaya başvurur).
-const SONUC = '../tests/parite-tarayici.json';
+const SONUC = 'tests/parite-tarayici.json';
 
 describe('Parite · tarayıcı (onnxruntime-web) ↔ Python (onnxruntime)', () => {
   it('5 referans girdide |Δ| < tolerans', () => {

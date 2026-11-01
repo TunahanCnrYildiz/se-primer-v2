@@ -7,10 +7,10 @@ dist/
 .env.*
 !.env.example
 
-# Cypress çıktıları (demo videosu e2e/demo-video/ altında tutulur)
-e2e/cypress/screenshots/
-e2e/cypress/videos/
-e2e/cypress/downloads/
+# Cypress çıktıları (demo videoları demo-video/ altında tutulur)
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
 
 # Ders materyalleri: dersin sahibine ait, repoda yayınlanmaz
 *.pdf

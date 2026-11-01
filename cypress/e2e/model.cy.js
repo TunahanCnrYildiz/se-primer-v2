@@ -1,7 +1,7 @@
 // spec §10.7: modelin oyunu değiştirdiği kabul örnekleri KÖ-9 … KÖ-11 ve gölge mod (§10.5).
 // KÖ-9/10 modelin DAVRANIŞINI test eder: olasılık ?p= test kancasıyla sabitlenir, çünkü gerçek
 // modelin hangi girdide eşiği geçeceği eğitime bağlıdır. Modelin SAYISAL doğruluğu parite.cy.js'te.
-import scenario from '../../../content/scenario.json';
+import scenario from '../../content/scenario.json';
 
 const [, k2] = scenario.decisions;
 

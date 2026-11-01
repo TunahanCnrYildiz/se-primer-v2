@@ -1,5 +1,5 @@
 // spec.md §6: kabul örnekleri KÖ-1 … KÖ-7. Metinler senaryonun tek kaynağından okunur.
-import scenario from '../../../content/scenario.json';
+import scenario from '../../content/scenario.json';
 
 const [k1, k2, k3] = scenario.decisions;
 
