@@ -1,120 +1,146 @@
-# SE Primer
+# SE Primer v2
 
-**Yazılım mühendisliği, oynanan bir kitap.** Bir hastanenin randevu sistemi sabah 08:00'de çöküyor ve nöbetçi mühendis sensin. Üç karar veriyorsun: mimari, test, KVKK. Uygulama her kararın teknik sonucunu "ne oldu / neden oldu" diye gösteriyor. Anlatı senin seviyene, rolüne ve hedefine göre değişiyor. Takıldığında bir AI tutor sana cevabı söylemiyor, soru soruyor.
+**Yazılım mühendisliği, oynanan bir kitap; artık oyuncusunu izleyerek uyum sağlıyor.** Bir hastanenin randevu sistemi sabah 08:00'de çöküyor ve nöbetçi mühendis sensin. Üç karar veriyorsun: mimari, test, KVKK. v1'de uyum sabit kurallara dayanıyordu (seviyene göre ipucu ve süre). v2'de buna oyuncunun oyun içindeki davranışından öğrenen küçük bir model eklendi: Bir sahneye girdiğinde model, o sahnede bedeli yüksek seçeneği (B) seçme olasılığını tahmin eder. Olasılık eşiği geçerse oyun, sen seçmeden **önce** müdahale eder: ipucu kartı açılır, süre baskısı kalkar, bir "dur ve düşün" sorusu çıkar.
 
 | | |
 |---|---|
-| ▶️ **Uygulama** (telefonda aç) | https://se-primer.ai.studio |
-| 🎬 **Demo videosu** (Cypress koşusu, 52 sn) | https://drive.google.com/file/d/1w5IF5sIDOxzNOJhbRGgQouY-CQwvHyOd/view · repoda: [e2e/demo-video/demo.cy.js.mp4](e2e/demo-video/demo.cy.js.mp4) |
-| 🎨 **Stitch ekranları** | https://stitch.withgoogle.com/projects/5913609131973401802 (Stitch, paylaşılan projeleri de yalnızca Google hesabıyla açıyor) · ekran görüntüleri repoda: [design/stitch/screens/](design/stitch/screens/) |
+| ▶️ **Uygulama** (telefonda aç, giriş gerekmez) | https://se-primer-v2.ai.studio |
+| 🤗 **Model** (Hugging Face, commit'e sabit) | ⏳ DOLDURULACAK: `https://huggingface.co/TunahanCnr/se-primer-v2/tree/<commit>` |
+| 🎬 **Demo videosu** (60–90 sn) | ⏳ DOLDURULACAK |
+| 📦 **Sürüm notları, dağıtım kararı, geri alma** | [RELEASE.md](RELEASE.md) |
+| 🖥️ **Sunucu tüketicisi** (bonus) | ⏳ DOLDURULACAK: Render adresi |
 
-## Nasıl oynanır
+Geçen haftanın sürümü (v1) ayrı repoda ve adreste olduğu gibi duruyor: [se-primer](https://github.com/TunahanCnrYildiz/se-primer) · https://se-primer.ai.studio
 
-1. **Giriş:** Seviyeni, rolünü (Backend, DevOps, QA) ve hedefini (mimari, test, KVKK) seç.
-   - *Yeni başladım:* her kararda ipucu açık gelir.
-   - *Deneyimliyim:* ipucu kapalı gelir ve her karar için 60 saniyen var. Süre dolarsa karar senin yerine verilir.
-2. **Üç karar:**
-   - Eski sürüme mi dönersin, canlıda mı yama yaparsın?
-   - Önce test mi koşarsın, hemen mi yayına alırsın?
-   - Logda hasta adı var: maskeler misin, olduğu gibi mi gönderirsin?
-3. **İki son:** Sistem her durumda ayağa kalkar. Asıl soru, hasta verisinin güvende olup olmadığı. 8 yolun her biri farklı bir saatte biter (08:25 – 09:00).
-4. **Tutor:** Sağ üstteki sohbet simgesi. "Hangisi doğru?" diye sorsan da cevabı söylemez.
+## Kurulum (3 komut)
 
-## Yöntem
+Gereksinim: Python 3.14, Node.js 20+.
 
-Kod, Google AI Studio'da spesifikasyon ve tasarımdan üretildi. Bu repo, kodun **neyi** yapması gerektiğini ve **yapıp yapmadığını** gösteren her şeyi bir arada tutuyor.
-
-```
-spec.md ──► Stitch ──► DESIGN.md ──► AI Studio ──► app/
-   │                                                 │
-   └── kabul örnekleri ──► e2e/ (Cypress) ◄──────────┤
-   └── tutor kuralları ──► eval/ (20 mesaj) ◄────────┘
+```bash
+pip install -r requirements.txt
+npm install
+npm --prefix app install
 ```
 
-| Adım | Ne yapıldı | Kanıt |
+## Çalıştırma
+
+| Ne | Komut | Sonuç |
 |---|---|---|
-| **1 · Spesifikasyon** | Problem, ölçülebilir başarı ölçütleri, kapsam dışı, 8 kabul örneği (biri arkadaş testinden), akış şeması, arayüz sözleşmeleri | [spec.md](spec.md) |
-| **2 · Tasarım** | Google Stitch'te 3 mobil ekran (+3 durum), tasarım kuralları, durum makinesi | [DESIGN.md](DESIGN.md) · [design/stitch/](design/stitch/) |
-| **3 · Uygulama** | AI Studio Build modunda üretildi, düzeltmeler prompt'larla yaptırıldı | [app/](app/) · [ai-studio-rehber.md](ai-studio-rehber.md) |
-| **4 · Tutor değerlendirmesi** | 20 öğrenci mesajı, elle etiketleme, hata türleri, oran ve güven aralığı. İki tur: ölç → talimatı düzelt → yeniden ölç | [eval/RAPOR.md](eval/RAPOR.md) |
-| **5 · E2E testler** | 8 yolun hepsi, 8 kabul örneği, kişiselleştirme. 60 sn'lik demo videosu | [e2e/](e2e/) |
-| **Karar kaydı** | 23 karar: gerekçeleri ve vazgeçilen seçenekler | [KARARLAR.md](KARARLAR.md) |
+| Eğit, ölç, paketle | `python train.py` | Veriyi hazırlar, eğitir, eval kapısından geçirir. Geçerse `model/` (model.onnx, config.json, model kartı). Geçmezse hata koduyla durur, `model/`'e dokunmaz |
+| Yayınla | `python yayinla.py` | Yalnız kapıdan geçmiş modeli Hugging Face'e yükler, `v2.0` etiketi koyar, commit'i `model/yayin.json`'a yazar |
+| Python oracle | `python tests/parite.py` | 5 referans girdiyi commit'e sabit modelle hesaplar, `tests/parite.json` ile karşılaştırır (`--sunucu <adres>` ile sunucuyu da) |
+| Uygulama | `npm --prefix app run dev` | http://localhost:3000. Gemini anahtarı yoksa tutor sabit ipuçlarına düşer |
+| E2E testler | `npm test` (uygulama açıkken) | Regresyon (v1'in 28 testi) + 8 yol gerçek modelle + KÖ-9/10/11, gölge mod + parite |
+| Sunucu | `cd sunucu && uvicorn app:app` | `POST /predict` (Render'da `render.yaml` ile) |
 
-## Sonuçlar
+## Uçtan uca akış
 
-| | |
-|---|---|
-| **E2E testler** | ✅ **28/28**: 8 yol, 14 kabul testi, 6 kişiselleştirme testi |
-| **Tutor ele verme oranı** | İlk talimat **9/20 (%45)** → düzeltilmiş talimat **1/20 (%5)**. %95 güven aralıkları %26–%66 ve %1–%24 |
-| **Tutor biçim kuralları** | ✅ 20/20 yanıt en fazla 3 cümle ve yönlendirici soru içeriyor |
-| **Arkadaş testi** (n = 1) | ✅ ~3 dk, takılmadan bitirdi · ❌ kararlarının nedenini açıklayamadı |
+```
+Veri Toplama Modu (?veri=1)          train.py                         yayinla.py
+arkadaş oyunları → CSV ──► data/ham ──► hazırla → eğit → ÖLÇ ──► kapı ──► Hugging Face
+                                         (5 katlı, oturuma göre)   │       (commit + v2.0 etiketi)
+                                                                   ✗ → durur, model yayınlanmaz
+                                                                           │ resolve/<commit>/model.onnx
+                        ┌──────────────────────────────────┬───────────────┴─────────────────┐
+                        ▼                                  ▼                                 ▼
+          Tarayıcı · onnxruntime-web          Python oracle · onnxruntime        Sunucu · FastAPI (Render)
+          (AI Studio uygulaması)              tests/parite.py                    sunucu/app.py
+          müdahale: ipucu / sayaç / soru      beklenen değerler                  POST /predict
+                        └────────── aynı 5 girdi, |Δ| < 1e-4 (diferansiyel test) ──────────┘
+```
 
-**Arkadaş testi:** Uygulamayı ilk kez gören biri telefonda oynadı. Karar 3'te "ekip loga bakacak, her şey olduğu gibi gitmeli" diye duraksadı. Bu, spec'teki görünmez bir varsayımı ortaya çıkardı: oyuncu maskelemenin neyi koruduğunu göremiyordu. Bu bulgu kabul örneği oldu (KÖ-8) ve düzeltildi. Oyuncunun sonda hiçbir kararın nedenini açıklayamaması ise ürünün asıl amacına dair açık bir soru olarak spec'te duruyor (B7).
+| Ödev adımı | Ne yapıldı | Kanıt |
+|---|---|---|
+| **1 · Spec** | Model gereksinimi, 11 girdi (yalnız sahneye girişte bilinenler), eval metriği ve kabul eşiği, 3 yeni kabul örneği (KÖ-9/10/11). Eşik **eğitimden önce** commit'lendi: `227eb23` (1 Kasım 2026, 12:09). Gerçek veri gelmeden önce 3 girdi eklendi, eşik aynı kaldı: `fb0675b` | [spec.md §10](spec.md#10-uyarlamalı-model-v2) |
+| **2 · Veri** | Veri Toplama Modu (gölge mod: model çalışır, müdahale etmez), her karar bir satır, `kaynak` sütunu, KVKK. ⏳ DOLDURULACAK: N gerçek oturum | [data/oturumlar.csv](data/oturumlar.csv) · [data/SOZLUK.md](data/SOZLUK.md) |
+| **3 · Eğitim + eval kapısı** | Tek komut, sabit tohum (13), sabit paket sürümleri, çıktılar bayt bayt tekrarlanabilir. Eşik altında hata kodu | [train.py](train.py) |
+| **4 · Artefakt** | `model.onnx` + `config.json` (özellik sırası, etiketler, metrikler, istek/yanıt JSON şeması) + model kartı | [model/](model/) |
+| **5 · Yayın** | Hugging Face public repo, commit'e sabit URL, `v2.0` etiketi, Shadow/Canary/Progressive planı, ödünleşim matrisi, geri alma | [RELEASE.md](RELEASE.md) |
+| **6 · Tüketim + test** | Tarayıcıda çıkarım, model kararı oyunu değiştiriyor. Python oracle, Cypress parite + regresyon, sunucu tüketicisi | [tests/](tests/) · [cypress/](cypress/) · [sunucu/](sunucu/) |
+| **7 · Sınav tasarımı** | ⏳ DOLDURULACAK | [SINAV_TASARIMI.md](SINAV_TASARIMI.md) |
 
-**Tutor değerlendirmesi, iki tur:**
-- **Tur 1:** Tutor cevabı hiçbir zaman doğrudan söylemedi. "Tek harf yaz", "debug modu" gibi baskılara direndi. Ama 20 yanıtın 9'unda tek taraflı sorularla, öğrencinin fikrini çürüterek ya da sonucu bir hikâyeyle anlatarak cevabı **dolaylı** yoldan gösterdi. Uygulamadaki anahtar kelime filtresi bunların hiçbirini yakalamadı.
-- **Tur 2:** Talimat bu dört hata türünü adıyla yasaklayacak şekilde yeniden yazıldı ve aynı 20 mesajla yeniden ölçüldü: sızıntı 1/20'ye indi. Ama yanıtlar daha genel ve soyut hâle geldi, yanıt süresi de uzadı. "Ele vermemek" ile "yardımcı olmak" arasındaki bu ödünleşim ölçülmedi ve bir sonraki adım olarak raporda duruyor.
+## Model
 
-Ayrıntılar, kategori kırılımı ve mesaj bazında değişim: [eval/RAPOR.md](eval/RAPOR.md).
+- **Hedef:** `secti_b`: oyuncu bu sahnede B'yi seçer mi (süre dolup B uygulanması dahil). Etiket oyunun kendisinden çıkar, elle etiketleme yok.
+- **Neden bu hedef:** v1'in açık sorusu (B7) oyuncunun kararlarını sorgulamamasıydı. Desteğin en çok işe yaradığı an, oyuncu bedelli bir kararı vermek üzereyken. Gereksiz bir ipucunun bedeli, kaçırılan riskli bir kararınkinden düşük; bu yüzden kapı B-duyarlılığına da bakar.
+- **Girdiler:** seviye, sahne, hedef–sahne eşleşmesi, tekrar oyun mu, giriş ekranında geçen süre ve cevap değiştirme sayısı, önceki sahnelerdeki B sayısı, karar süresi, ipucu açma, tutor isteği, açıklama ekranında kalma süresi. Bu sahnede oluşan hiçbir bilgi girdi değildir (sızıntı). Tanımlar: [data/SOZLUK.md](data/SOZLUK.md).
+- **Model:** `StandardScaler → LogisticRegression(class_weight="balanced")`, `sklearn → ONNX` (opset 17, girdi `input`, çıktı `probabilities`).
+- **Kapı (spec §10.4):** Yalnız gerçek oturumlarda, oturuma göre gruplanmış 5 katlı çapraz doğrulama. ROC-AUC ≥ 0.65 ve B-duyarlılığı ≥ 0.60, ONNX ile sklearn farkı ≤ 1e-4. Ön koşul: ≥ 15 gerçek oturum ve ≥ 8 gerçek B.
+- **Sonuç:** ⏳ DOLDURULACAK (metrikler, güven aralığı, kapı sonucu). Ayrıntı: [model/README.md](model/README.md).
 
-## Ürün kararı: yapmadığım üç özellik
+## Veri
 
-1. **Kullanıcı hesabı ve öğrenme geçmişi:** Tek bölümlük bir senaryoda geçmişin taşıyacağı değer, hasta senaryolu bir uygulamada kişisel veri saklamanın KVKK yükünü karşılamıyor.
-2. **Puan, rozet ve "doğru cevap" işaretleri:** Oyuncunun seçimi "doğru/yanlış" diye işaretlemek, öğrenmeyi "neden oldu" sorusundan "kaç puan aldım" sorusuna kaydırır. Ürünün amacı ise o "neden".
-3. **Tutor yanıtlarını denetleyen ikinci bir LLM:** Değerlendirme bunun gerektiğini gösterdi, ama 8 saniyelik yanıt süresi içinde ikinci bir model çağrısı gecikmeyi iki katına çıkarıp oyuncuyu daha sık sabit ipucuna düşürürdü.
+**Gerçek veri:** Oyunun `?veri=1` adresiyle açılan Veri Toplama Modu, her kararı bir satır olarak kaydeder ve son ekranda oyuncunun kendisinin indirip gönderdiği bir CSV üretir. Sunucuya hiçbir şey yazılmaz. Ad, e-posta, cihaz kimliği, IP ve konum toplanmaz; oturum kimliği her oyunda tarayıcıda rastgele üretilir; tutor mesajlarının metni değil yalnız sayısı tutulur. Arkadaşlardan gelen dosyalar `data/ham/` klasöründe.
+
+**Sentetik veri:** Boru hattını gerçek veri gelmeden kurmak ve eğitimde gerçek veriyi desteklemek için. **Hiçbir ölçüme girmez.** Üretici `data/hazirla.py` → `sentetik_veri()`, **tohum 13**, **100 oturum**:
+
+- Her oyuncunun gizli bir risk eğilimi vardır: `r ~ N(0, 1)`. Seviye, rol ve hedef eşit olasılıkla seçilir.
+- Oyunların %35'i tekrar oyundur (`oyun_no = 2 + Poisson(0.3)`), kalanı ilk oyun.
+- Giriş süresi: tekrar oyunda `lognormal(ln 4, 0.5)`, ilk oyunda `lognormal(ln 20 − 0.3·r, 0.5)` sn. Cevap değiştirme: tekrar oyunda `Poisson(0.4)`, ilk oyunda `Poisson(e^(−0.8 − 0.4·r))`.
+- Her sahnede: ipucu açık = "Yeni başladım"da 1, diğerlerinde `Bernoulli(σ(−0.2 − 0.8·r))`. Tutor isteği `Poisson(e^(−1 − 0.5·r))`. Karar süresi `lognormal(ln 25 − 0.35·r − 0.15·seviye, 0.4)` sn. Açıklama süresi `lognormal(ln 12 − 0.4·r, 0.5)` sn.
+- B olasılığı: `σ(−1.1 + 0.9·r + s − 0.6·[hedef bu sahne] − 0.5·[ipucu açık] + 0.3·önceki_B + 0.8·[tekrar oyun])`, sahne etkisi `s` = K1 0.2, K2 0.4, K3 −0.4.
+- "Deneyimliyim"de karar süresi ≥ 60 sn ise süre dolar ve B uygulanır.
+
+Katsayılar gerçek oyuncudan tahmin edilmedi, makul görülen yönler seçildi. Bu yüzden sentetik veride ölçülen bir sayı (ör. geliştirme denemesinde AUC 0.62) modelin gerçek başarısı hakkında hiçbir şey söylemez; yalnız boru hattının çalıştığını gösterir.
+
+## Testler
+
+| Test | Ne kanıtlar | Sonuç |
+|---|---|---|
+| ONNX ↔ sklearn (`train.py`) | Dağıtılan dosya eğitilen modelle aynı sayıyı verir | ⏳ DOLDURULACAK |
+| Parite: tarayıcı ↔ Python (`cypress/e2e/parite.cy.js`) | İki bağımsız çalışma zamanı aynı model ve girdiyle aynı olasılığı verir (diferansiyel test, kâhin = Python) | ⏳ DOLDURULACAK |
+| Parite: sunucu ↔ Python (`tests/parite.py --sunucu`) | Bonus tüketici aynı sayıyı verir | ⏳ DOLDURULACAK |
+| Regresyon (v1'in 28 testi, `MODEL_P=0`) | Model "risk yok" dediğinde v1 kuralları aynen geçerli | ⏳ DOLDURULACAK |
+| 8 yol, gerçek modelle | Müdahale olsa da karar mantığı, saatler ve sonlar değişmez | ⏳ DOLDURULACAK |
+| KÖ-9/10/11 + gölge mod (`cypress/e2e/model.cy.js`) | Müdahale davranışı, model yokken v1'e dönüş, veri modunda müdahale olmaması | ⏳ DOLDURULACAK |
+
+KÖ-9/10'da olasılık `?p=` test kancasıyla sabitlenir: Bu testler modelin *davranışını* sınar, *sayısal doğruluğunu* parite testi sınar.
 
 ## Repo yapısı
 
 ```
-├── spec.md                 spesifikasyon
-├── DESIGN.md               tasarım kuralları + durum makinesi
-├── KARARLAR.md             karar kaydı
-├── content/scenario.json   tüm ekran metinleri, süreler, ipuçları (tek kaynak)
-├── design/stitch/          Stitch ekran görüntüleri, HTML çıktısı, ham tasarım sistemi
-├── stitch-prompt.md        Stitch'e verilen prompt'lar
-├── ai-studio-rehber.md     AI Studio'ya verilen ana prompt ve süreç
-├── app/                    AI Studio'nun ürettiği uygulama (React + Vite + Express)
-├── eval/                   tutor değerlendirmesi: girdiler, betikler, etiketler, rapor
-└── e2e/                    Cypress testleri ve demo videosu
+├── spec.md                 spesifikasyon (v2: §10 uyarlamalı model)
+├── data/
+│   ├── oturumlar.csv       eğitim verisi, her karar bir satır (gerçek + sentetik, kaynak sütunu)
+│   ├── SOZLUK.md           veri sözlüğü
+│   ├── hazirla.py          ham dosyaları doğrular, sentetik üretir, girdileri türetir
+│   └── ham/                Veri Toplama Modu'ndan gelen CSV'ler
+├── train.py                eğit → ölç → kapı → paketle
+├── model/                  model.onnx, config.json, README.md (model kartı), yayin.json (commit)
+├── yayinla.py              Hugging Face'e yükleme ve doğrulama
+├── RELEASE.md              sürüm notları, dağıtım kararı, Shadow/Canary, geri alma
+├── tests/                  parite.py (Python oracle), parite.json (5 referans girdi)
+├── cypress/                E2E testler (regresyon, parite, KÖ-9/10/11)
+├── sunucu/                 FastAPI tüketicisi + render.yaml (kökte)
+├── app/                    AI Studio uygulaması (React + Vite + Express + onnxruntime-web)
+├── ai-studio-v2.md         AI Studio'ya gönderilen v2 prompt'ları ve kontrol listeleri
+├── SINAV_TASARIMI.md       vize sorusu tasarımı
+└── (v1'den) DESIGN.md, KARARLAR.md, content/, design/, eval/, ai-studio-rehber.md
 ```
 
-`app/` klasörü AI Studio'dan olduğu gibi indirildi. İçindeki `README.md` AI Studio'nun şablonu. `public/assets/aistudio/` klasöründe AI Studio'ya ilk yüklenen referans dosyaların o anki kopyaları duruyor. Güncel hâlleri kök dizinde.
+`app/` AI Studio'dan indirildi ve elle değiştirilmedi; her değişiklik [ai-studio-v2.md](ai-studio-v2.md)'deki bir prompt'la yapıldı ve kontrol listesiyle doğrulandı.
 
-## Yerelde çalıştırma
+## Kaynaklar
 
-Gereksinim: Node.js 20+
+1. @seyyah (2026). *huggingface-hello-web*: tabular model → ONNX → Hugging Face Hub → web, mobil, Rails. https://github.com/seyyah/huggingface-hello-web. **Uyarlananlar:** `train.py`'deki `onnx_aktar` (girdi/çıktı adları, zipmap kapalı, 1e-4 kontrolü) ve model kartı iskeleti `hf_cli.py train`'den; `yayinla.py` `hf_cli.py push-model`'den; tarayıcıdaki çıkarım deseni `web/index.html`'den; sunucu tüketicisi fikri `rails-api/`'den.
+2. @seyyah (2026, 30 Ekim). *Modelden Ürüne: model geliştirme, dağıtım ve çıkarım* ve *Yazılım Testi Tartışması* (ders sunumları).
+3. Amershi, S., Begel, A., Bird, C., DeLine, R., Gall, H., Kamar, E., Nagappan, N., Nushi, B., Zimmermann, T. (2019). Software Engineering for Machine Learning: A Case Study. *ICSE-SEIP*.
+4. Shankar, S., Garcia, R., Hellerstein, J. M., Parameswaran, A. G. (2024). Operationalizing Machine Learning: An Interview Study. *Proc. ACM Hum.-Comput. Interact.* (CSCW). (Ön baskı: arXiv, 2022.) Velocity, Validation, Versioning.
+5. Mitchell, M. vd. (2019). Model Cards for Model Reporting. *ACM FAT\**.
+6. Breck, E., Cai, S., Nielsen, E., Salib, M., Sculley, D. (2017). The ML Test Score: A Rubric for ML Production Readiness and Technical Debt Reduction. *IEEE Big Data*.
+7. Sommerville, I. (2016). *Software Engineering* (10. baskı). Bl. 8 Yazılım testi, Bl. 17 Dağıtık yazılım mühendisliği, Bl. 18 Hizmet odaklı yazılım mühendisliği, Bl. 25 Konfigürasyon yönetimi. Pearson.
+8. Stanford HAI (2025). *AI Index Report 2025*. Çıkarım maliyetindeki düşüş.
+9. Gartner (2025). Kuruluşların 2027'ye kadar göreve özel küçük modelleri genel amaçlı LLM'lerden üç kat fazla kullanacağı öngörüsü (basın bülteni).
+10. Hugging Face. Hub belgeleri: model repoları, `revision`, `resolve` URL'leri. https://huggingface.co/docs/hub
+11. ONNX Runtime (onnxruntime-web) ve skl2onnx belgeleri. https://onnxruntime.ai · https://onnx.ai/sklearn-onnx
+12. Cypress belgeleri: E2E testler, `cy.intercept`, `data-cy` seçicileri. https://docs.cypress.io
+13. 6698 sayılı Kişisel Verilerin Korunması Kanunu (2016). https://www.kvkk.gov.tr
+14. Stephenson, N. (1995). *The Diamond Age: Or, A Young Lady's Illustrated Primer*. Bantam Spectra.
 
-```bash
-cd app
-npm install
-echo GEMINI_API_KEY="anahtarın" > .env
-npm run dev
-```
+## Kodlama ajanı ve araç beyanı
 
-Uygulama http://localhost:3000 adresinde açılır. Anahtar olmadan da oynanır: tutor bu durumda sabit ipuçlarını gösterir.
+⏳ DOLDURULACAK: kullanıcı onaylayacak. Taslak:
 
-**Testler** (uygulama açıkken):
-
-```bash
-cd e2e
-npm install
-npm test
-```
-
-Demo videosunu yeniden kaydetmek için `npm run demo` (Chrome gerekir). Testler gerçek Gemini'ye bağlanmaz, demo bağlanır.
-
-**Tutor değerlendirmesi** (uygulama anahtarla açıkken):
-
-```bash
-node eval/run.mjs
-```
-
-Ardından `eval/etiketleme.csv`'yi doldur ve `node eval/report.mjs` ile raporu üret. Ayrıntılar [eval/README.md](eval/README.md)'de.
-
-## Kapsam dışı
-
-Kullanıcı hesabı, ödeme, ikinci bölüm, gerçek hasta verisi (bütün isimler uydurmadır), native mobil uygulama. Gerekçeler [spec.md §2](spec.md#2-kapsam)'de.
-
-## Araçlar
-
-[Google Stitch](https://stitch.withgoogle.com) · [Google AI Studio](https://aistudio.google.com) (Gemini) · [Cypress](https://www.cypress.io) · React, Vite, Express, Tailwind CSS
+- **Claude Code (Anthropic):** Veri hazırlama, sentetik üretici, `train.py` (eval kapısı, ONNX, model kartı), `yayinla.py`, `tests/parite.py`, Cypress testleri, FastAPI sunucusu ve belge taslakları (spec §10, README, RELEASE) bu araçla yazıldı. Hedef, eşik ve kapsam kararlarını ben verdim; ajan seçenekleri gerekçeleriyle sundu.
+- **Google AI Studio (Gemini):** Uygulama kodu (`app/`) yalnız prompt'larla üretildi ve değiştirildi (Veri Toplama Modu, giriş ölçümleri, onnxruntime-web ile çıkarım). Her prompt'tan sonra kontrol listesini yayındaki adreste kendim denedim; indirilen kod satır satır incelendi.
+- **Elle düzeltilenler:** ⏳ DOLDURULACAK
