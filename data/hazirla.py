@@ -142,7 +142,7 @@ def main():
     gercek = gercek_veri()
     sentetik = sentetik_veri()
     veri = ozellik_turet(pd.concat([gercek, sentetik], ignore_index=True))
-    veri.to_csv(CIKTI, index=False)
+    veri.to_csv(CIKTI, index=False, lineterminator="\n")  # her işletim sisteminde aynı bayt (SHA-256)
     for kaynak, grup in veri.groupby("kaynak"):
         print(f"  {kaynak:9s}: {grup['oturum'].nunique():3d} oturum, {len(grup):3d} satır, "
               f"B oranı %{100 * grup[HEDEF].mean():.0f}")

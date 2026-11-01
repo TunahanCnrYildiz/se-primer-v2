@@ -1,0 +1,4 @@
+# Veri ve model dosyaları her işletim sisteminde aynı baytla kalmalı (config.json'daki SHA-256).
+*.csv  text eol=lf
+*.json text eol=lf
+*.onnx binary
