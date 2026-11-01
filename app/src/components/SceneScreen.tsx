@@ -9,6 +9,8 @@ interface SceneScreenProps {
   k1Choice?: Choice;
   profile: PlayerProfile;
   clock: string;
+  modelP: number | null;
+  mudahale: boolean;
   onSelectChoice: (
     choice: Choice,
     timedOut: boolean,
@@ -23,6 +25,8 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
   k1Choice,
   profile,
   clock,
+  modelP,
+  mudahale,
   onSelectChoice,
   onOpenTutor,
 }) => {
@@ -33,13 +37,14 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
   const [ariaAnnouncement, setAriaAnnouncement] = useState<string>('');
 
   // Hint card expansion state:
+  // If mudahale is true: starts OPEN for every level
   // Beginner: open by default
   // Intermediate / Experienced: collapsed by default, tap to open
-  const [isHintOpen, setIsHintOpen] = useState<boolean>(profile.level === 'beginner');
+  const [isHintOpen, setIsHintOpen] = useState<boolean>(mudahale || profile.level === 'beginner');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const decisionShownTimeRef = useRef<number>(performance.now());
-  const hasHintBeenOpenedRef = useRef<boolean>(profile.level === 'beginner');
+  const hasHintBeenOpenedRef = useRef<boolean>(mudahale || profile.level === 'beginner');
 
   // Reset timer & selection when decision changes
   useEffect(() => {
@@ -47,12 +52,15 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
     setIsProcessing(false);
     setTimeLeft(60);
     setAriaAnnouncement('');
-    setIsHintOpen(profile.level === 'beginner');
+
+    const hintDefaultOpen = mudahale || profile.level === 'beginner';
+    setIsHintOpen(hintDefaultOpen);
+    hasHintBeenOpenedRef.current = hintDefaultOpen;
 
     decisionShownTimeRef.current = performance.now();
-    hasHintBeenOpenedRef.current = profile.level === 'beginner';
 
-    if (profile.level === 'experienced') {
+    // If mudahale is true, 60s timer is NOT started
+    if (profile.level === 'experienced' && !mudahale) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -67,25 +75,25 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [decisionIndex, profile.level]);
+  }, [decisionIndex, profile.level, mudahale]);
 
   // Handle accessibility announcements at exactly 30s and 10s
   useEffect(() => {
-    if (profile.level === 'experienced') {
+    if (profile.level === 'experienced' && !mudahale) {
       if (timeLeft === 30) {
         setAriaAnnouncement('Kalan süre 30 saniye');
       } else if (timeLeft === 10) {
         setAriaAnnouncement('Kalan süre 10 saniye');
       }
     }
-  }, [timeLeft, profile.level]);
+  }, [timeLeft, profile.level, mudahale]);
 
-  // Auto-trigger Option B if time runs out (KÖ-2)
+  // Auto-trigger Option B if time runs out (KÖ-2) - disabled if mudahale is true
   useEffect(() => {
-    if (profile.level === 'experienced' && timeLeft === 0 && !selectedChoice && !isProcessing) {
+    if (profile.level === 'experienced' && !mudahale && timeLeft === 0 && !selectedChoice && !isProcessing) {
       handleSelectOption('B', true);
     }
-  }, [timeLeft, profile.level, selectedChoice, isProcessing]);
+  }, [timeLeft, profile.level, mudahale, selectedChoice, isProcessing]);
 
   const handleSelectOption = (choice: Choice, timedOut = false) => {
     if (isProcessing) return;
@@ -191,8 +199,18 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
         </button>
       </header>
 
-      {/* Timer Bar (Only for experienced level) */}
-      {profile.level === 'experienced' && (
+      {/* Model Line */}
+      <div
+        data-cy="p"
+        data-p={modelP !== null ? String(modelP) : ''}
+        data-mudahale={mudahale ? '1' : '0'}
+        className="font-mono text-[11px] text-[#5B6275] mb-3"
+      >
+        {modelP !== null ? `MODEL · p = ${modelP.toFixed(4)}` : 'MODEL · —'}
+      </div>
+
+      {/* Timer Bar (Only for experienced level when not mudahale) */}
+      {profile.level === 'experienced' && !mudahale && (
         <div className="mb-4">
           <div className="flex items-center justify-between text-[13px] font-mono mb-1.5">
             <span className="text-[11px] tracking-[0.08em] text-[#5B6275] uppercase">
@@ -257,6 +275,21 @@ export const SceneScreen: React.FC<SceneScreenProps> = ({
             </div>
           )}
         </div>
+
+        {/* Model Soru (DUR VE DÜŞÜN) - Only when mudahale is true */}
+        {mudahale && (
+          <div
+            data-cy="model-soru"
+            className="w-full bg-[#FFFDF8] rounded-[14px] border border-[#D9D3C7] shadow-subtle border-l-[3px] border-l-[#A34E12] p-4"
+          >
+            <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-tight mb-2">
+              <span className="font-bold text-[#A34E12] uppercase">DUR VE DÜŞÜN</span>
+            </div>
+            <p className="font-sans text-[14px] leading-[22px] text-[#14213D]">
+              {decision.hints[1] || decision.hints[0]}
+            </p>
+          </div>
+        )}
 
         {/* Hint Card */}
         <div

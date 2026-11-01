@@ -1,4 +1,4 @@
-import { useState, useTransition, useRef } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 import { Screen, Level, Role, Goal, Choice, GameChoices, ChatMessage, DecisionMeasurement, OnboardingMeasurement } from './types';
 import { scenarioData } from './data/scenario';
 import { calculateClock, calculateTotalElapsedMinutes, getDecisionMinutes, BASE_START_MINUTES, formatTime } from './utils/time';
@@ -7,10 +7,105 @@ import { SceneScreen } from './components/SceneScreen';
 import { ExplanationSheet } from './components/ExplanationSheet';
 import { TutorSheet } from './components/TutorSheet';
 import { EndingScreen } from './components/EndingScreen';
+import { ModelTestPanel } from './components/ModelTestPanel';
 import { askTutor } from './services/tutor';
+import { loadModel, predictP, getDecisionThreshold } from './services/model';
+
+function computeFeatures(
+  sahneIndex: number,
+  currentLevel: Level,
+  currentRole: Role,
+  currentGoal: Goal,
+  onboarding: OnboardingMeasurement,
+  gameChoices: GameChoices,
+  decRecords: Record<string, DecisionMeasurement>
+): Record<string, number> {
+  const sahne_no = sahneIndex + 1;
+  const seviye = currentLevel === 'beginner' ? 0 : currentLevel === 'intermediate' ? 1 : 2;
+  const hedef_eslesir =
+    (currentGoal === 'architecture' && sahne_no === 1) ||
+    (currentGoal === 'testing' && sahne_no === 2) ||
+    (currentGoal === 'privacy' && sahne_no === 3)
+      ? 1
+      : 0;
+  const tekrar_oyun = onboarding.oyun_no > 1 ? 1 : 0;
+  const giris_sn = Number(onboarding.giris_sn.toFixed(1));
+  const giris_degisiklik = onboarding.giris_degisiklik;
+
+  let onceki_b_sayisi = 0;
+  if (sahneIndex >= 1 && gameChoices.k1 === 'B') onceki_b_sayisi++;
+  if (sahneIndex >= 2 && gameChoices.k2 === 'B') onceki_b_sayisi++;
+
+  let onceki_karar_suresi_sn = 0;
+  let onceki_ipucu_acti = 0;
+  let onceki_tutor_mesaj = 0;
+  let onceki_aciklama_sn = 0;
+
+  if (sahneIndex === 1) {
+    const prevRec = decRecords['k1'];
+    if (prevRec) {
+      onceki_karar_suresi_sn = Number(prevRec.karar_suresi_sn.toFixed(1));
+      onceki_ipucu_acti = prevRec.ipucu_acti;
+      onceki_tutor_mesaj = prevRec.tutor_mesaj;
+      onceki_aciklama_sn = Number(prevRec.aciklama_sn.toFixed(1));
+    }
+  } else if (sahneIndex === 2) {
+    const prevRec = decRecords['k2'];
+    if (prevRec) {
+      onceki_karar_suresi_sn = Number(prevRec.karar_suresi_sn.toFixed(1));
+      onceki_ipucu_acti = prevRec.ipucu_acti;
+      onceki_tutor_mesaj = prevRec.tutor_mesaj;
+      onceki_aciklama_sn = Number(prevRec.aciklama_sn.toFixed(1));
+    }
+  }
+
+  return {
+    seviye,
+    sahne_no,
+    hedef_eslesir,
+    tekrar_oyun,
+    giris_sn,
+    giris_degisiklik,
+    onceki_b_sayisi,
+    onceki_karar_suresi_sn,
+    onceki_ipucu_acti,
+    onceki_tutor_mesaj,
+    onceki_aciklama_sn,
+  };
+}
+
+async function getPredictionForDecision(
+  features: Record<string, number>,
+  isDataCollectionMode: boolean
+): Promise<{ p: number | null; mudahale: boolean }> {
+  try {
+    const pPromise = predictP(features);
+    const timeoutPromise = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 1500)
+    );
+    const p = await Promise.race([pPromise, timeoutPromise]);
+    const threshold = getDecisionThreshold();
+    const mudahale = p !== null && p >= threshold && !isDataCollectionMode;
+    return { p, mudahale };
+  } catch (error) {
+    console.warn('Prediction error:', error);
+    return { p: null, mudahale: false };
+  }
+}
 
 export default function App() {
   const [, startTransition] = useTransition();
+
+  // Model Test Mode: ON only if URL has model-test=1 at startup
+  const [isModelTest] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('model-test') === '1';
+  });
+
+  // Start model loading once when app mounts
+  useEffect(() => {
+    loadModel();
+  }, []);
 
   // Data Collection Mode: ON only if URL has ?veri=1 at startup
   const [isDataMode] = useState<boolean>(() => {
@@ -26,6 +121,12 @@ export default function App() {
   const onboardingShownTimeRef = useRef<number>(performance.now());
   const [girisDegisiklikCount, setGirisDegisiklikCount] = useState<number>(0);
   const [currentOnboardingData, setCurrentOnboardingData] = useState<OnboardingMeasurement | null>(null);
+
+  // Model prediction state for current decision screen
+  const [currentPrediction, setCurrentPrediction] = useState<{
+    p: number | null;
+    mudahale: boolean;
+  }>({ p: null, mudahale: false });
 
   // Decision measurements for data collection mode
   const [decisionRecords, setDecisionRecords] = useState<Record<string, DecisionMeasurement>>({});
@@ -106,7 +207,7 @@ export default function App() {
   const explanationElapsed = calculateTotalElapsedMinutes(previewChoices);
 
   // Start game from Onboarding
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     if (!level || !role || !goal) return;
 
     // Record onboarding measurements
@@ -117,11 +218,12 @@ export default function App() {
     const fixedGirisSn = Number(girisDurationSec.toFixed(1));
     const fixedGirisDegisiklik = girisDegisiklikCount;
 
-    setCurrentOnboardingData({
+    const onboardingData: OnboardingMeasurement = {
       oyun_no: nextOyunNo,
       giris_sn: fixedGirisSn,
       giris_degisiklik: fixedGirisDegisiklik,
-    });
+    };
+    setCurrentOnboardingData(onboardingData);
 
     // Generate a fresh session ID for this game
     const newSessionId = typeof crypto !== 'undefined' && crypto.randomUUID
@@ -141,6 +243,13 @@ export default function App() {
     setIsTutorOpen(false);
     setTutorMessages([]);
     setHintCounters({ k1: 0, k2: 0, k3: 0 });
+
+    // Compute K1 features & run prediction
+    const k1Features = computeFeatures(0, level, role, goal, onboardingData, {}, {});
+    const pred = await getPredictionForDecision(k1Features, isDataMode);
+    setCurrentPrediction(pred);
+
+    // THEN show the decision screen
     startTransition(() => {
       setScreen('scene');
     });
@@ -180,7 +289,7 @@ export default function App() {
   };
 
   // Called when player clicks "Devam →" in ExplanationSheet
-  const handleContinueFromExplanation = () => {
+  const handleContinueFromExplanation = async () => {
     const explanationDurationSec = (performance.now() - explanationStartTimeRef.current) / 1000;
 
     const record: DecisionMeasurement = {
@@ -192,10 +301,12 @@ export default function App() {
       aciklama_sn: Number(explanationDurationSec.toFixed(1)),
     };
 
-    setDecisionRecords((prev) => ({
-      ...prev,
+    const updatedDecisionRecords = {
+      ...decisionRecords,
       [currentDecision.id]: record,
-    }));
+    };
+
+    setDecisionRecords(updatedDecisionRecords);
 
     setIsExplanationOpen(false);
     setCurrentChoice(null);
@@ -203,8 +314,25 @@ export default function App() {
     setCurrentDecisionMeta(null);
 
     if (decisionIndex < scenarioData.decisions.length - 1) {
+      const nextIndex = decisionIndex + 1;
+
+      // Compute features for next decision & run prediction
+      if (level && role && goal && currentOnboardingData) {
+        const nextFeatures = computeFeatures(
+          nextIndex,
+          level,
+          role,
+          goal,
+          currentOnboardingData,
+          choices,
+          updatedDecisionRecords
+        );
+        const pred = await getPredictionForDecision(nextFeatures, isDataMode);
+        setCurrentPrediction(pred);
+      }
+
       // Advance to next decision
-      setDecisionIndex((prev) => prev + 1);
+      setDecisionIndex(nextIndex);
     } else {
       // Finished all 3 decisions, advance to ending screen
       startTransition(() => {
@@ -332,6 +460,7 @@ export default function App() {
     // Reset onboarding measurements for next game
     onboardingShownTimeRef.current = performance.now();
     setGirisDegisiklikCount(0);
+    setCurrentPrediction({ p: null, mudahale: false });
 
     startTransition(() => {
       setScreen('onboarding');
@@ -381,6 +510,10 @@ export default function App() {
   const finalClock = calculateClock(choices);
   const finalMttr = calculateTotalElapsedMinutes(choices);
 
+  if (isModelTest) {
+    return <ModelTestPanel />;
+  }
+
   return (
     <main className="min-h-screen w-full bg-[#F7F4EE] flex justify-center text-[#14213D] selection:bg-[#F0A35A]/30">
       <div className="w-full max-w-[480px] min-h-screen bg-[#F7F4EE] relative flex flex-col">
@@ -405,6 +538,8 @@ export default function App() {
               k1Choice={choices.k1}
               profile={{ level, role, goal }}
               clock={currentSceneClock}
+              modelP={currentPrediction.p}
+              mudahale={currentPrediction.mudahale}
               onSelectChoice={handleSelectChoice}
               onOpenTutor={() => setIsTutorOpen(true)}
             />
