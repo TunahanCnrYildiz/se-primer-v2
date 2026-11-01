@@ -22,6 +22,7 @@ import numpy as np
 import onnxruntime as ort
 
 sys.stdout.reconfigure(encoding="utf-8")  # Windows konsolunda Türkçe karakterler
+sys.stderr.reconfigure(encoding="utf-8")
 
 BURASI = Path(__file__).resolve().parent
 KOK = BURASI.parent

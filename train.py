@@ -34,6 +34,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 sys.stdout.reconfigure(encoding="utf-8")  # Windows konsolunda Türkçe karakterler
+sys.stderr.reconfigure(encoding="utf-8")
 
 BURASI = Path(__file__).resolve().parent
 sys.path.insert(0, str(BURASI / "data"))

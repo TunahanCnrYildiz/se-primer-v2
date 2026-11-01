@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 
 sys.stdout.reconfigure(encoding="utf-8")  # Windows konsolunda Türkçe karakterler
+sys.stderr.reconfigure(encoding="utf-8")
 
 BURASI = Path(__file__).resolve().parent
 HAM =BURASI / "ham"
