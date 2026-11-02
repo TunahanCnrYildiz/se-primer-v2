@@ -1,0 +1,39 @@
+{
+  "consumer": "onnxruntime-web 1.31.1 (Cypress, Electron)",
+  "model_sha256": "05ea6c401cc8f94cf9c7e7a68fde2244b9abb99994c39f28761c0fdb1904fbd7",
+  "tolerance": 0.0001,
+  "max_abs_diff": 2.74190521398765e-8,
+  "model_kaynagi": "Hugging Face (commit'e sabit URL)",
+  "cases": [
+    {
+      "name": "K1 · yeni başlayan, ilk oyun, girişte acele etmedi",
+      "python": 0.79695153,
+      "tarayici": 0.7969515323638916,
+      "abs_diff": 2.363891637990889e-9
+    },
+    {
+      "name": "K2 · deneyimli, K1'de hızlı B, açıklamayı okumadı",
+      "python": 0.81386083,
+      "tarayici": 0.8138608336448669,
+      "abs_diff": 3.644866963803395e-9
+    },
+    {
+      "name": "K2 · biraz deneyimli, K1'de düşünerek A, tutor'a sordu",
+      "python": 0.02692118,
+      "tarayici": 0.02692115306854248,
+      "abs_diff": 2.693145751894721e-8
+    },
+    {
+      "name": "K3 · tekrar oyun, önceki iki sahnede B",
+      "python": 0.41394979,
+      "tarayici": 0.4139498174190521,
+      "abs_diff": 2.74190521398765e-8
+    },
+    {
+      "name": "K3 · deneyimli, K2'de süre doldu (60 sn), hedefi KVKK",
+      "python": 0.62263083,
+      "tarayici": 0.6226308345794678,
+      "abs_diff": 4.5794678049659865e-9
+    }
+  ]
+}
