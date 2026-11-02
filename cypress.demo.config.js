@@ -14,8 +14,6 @@ export default defineConfig({
     video: true,
     // Normal test koşusu kendi çıktı klasörlerini her seferinde temizler; demo videosu ayrı tutulur.
     videosFolder: 'demo-video',
-    // Klasördeki v1 videosu (v1-demo.mp4) silinmesin.
-    trashAssetsBeforeRuns: false,
     // 18 CRF görsel olarak kayıpsıza yakın; varsayılan sıkıştırma küçük yazıları bulanıklaştırıyor.
     videoCompression: 18,
     setupNodeEvents(on) {
