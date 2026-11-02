@@ -1,0 +1,251 @@
+{
+  "name": "se-primer-v2",
+  "version": "2.1",
+  "title": "SE Primer v2 — bedelli seçim riski",
+  "description": "Oyuncu bir sahneye girdiğinde, o sahnede bedeli yüksek seçeneği (B) seçme olasılığını tahmin eder. p >= decision_threshold ise oyun ipucu/sayaç/tutor ile müdahale eder.",
+  "target": "secti_b",
+  "classes": [
+    "0",
+    "1"
+  ],
+  "class_labels": {
+    "0": "A seçer",
+    "1": "B seçer (bedelli)"
+  },
+  "decision_threshold": 0.5,
+  "features": [
+    {
+      "name": "seviye",
+      "description": "Girişteki seviye: 0 yeni başladım, 1 biraz deneyimli, 2 deneyimli",
+      "unit": "kategori",
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "sahne_no",
+      "description": "Karar: 1 mimari, 2 test, 3 KVKK",
+      "unit": "kategori",
+      "min": 1,
+      "max": 3
+    },
+    {
+      "name": "hedef_eslesir",
+      "description": "Oyuncunun hedefi bu sahnenin konusu mu",
+      "unit": "0/1",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "tekrar_oyun",
+      "description": "Bu sekmede 'Yeniden oyna' ile başlayan oyun mu",
+      "unit": "0/1",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "giris_sn",
+      "description": "Giriş ekranında 'Başla'ya kadar geçen süre",
+      "unit": "saniye",
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "giris_degisiklik",
+      "description": "Giriş ekranında verilen cevabın değiştirilme sayısı",
+      "unit": "adet",
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "onceki_b_sayisi",
+      "description": "Önceki sahnelerde B seçilme sayısı",
+      "unit": "adet",
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "onceki_karar_suresi_sn",
+      "description": "Önceki sahnede seçime kadar geçen süre (sahne 1'de 0)",
+      "unit": "saniye",
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "onceki_ipucu_acti",
+      "description": "Önceki sahnede ipucu kartı açık mıydı (sahne 1'de 0)",
+      "unit": "0/1",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "onceki_tutor_mesaj",
+      "description": "Önceki sahnede tutor'a giden istek sayısı (sahne 1'de 0)",
+      "unit": "adet",
+      "min": 0,
+      "max": null
+    },
+    {
+      "name": "onceki_aciklama_sn",
+      "description": "Önceki açıklama ekranında kalınan süre (sahne 1'de 0)",
+      "unit": "saniye",
+      "min": 0,
+      "max": null
+    }
+  ],
+  "onnx": {
+    "input_name": "input",
+    "input_dtype": "float32",
+    "input_shape": [
+      null,
+      11
+    ],
+    "output_name": "probabilities",
+    "output_shape": [
+      null,
+      2
+    ],
+    "positive_class_index": 1,
+    "opset": 17,
+    "max_abs_diff_vs_sklearn": 8.05e-08
+  },
+  "request_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Tahmin isteği (özellik adı → değer)",
+    "type": "object",
+    "properties": {
+      "seviye": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2
+      },
+      "sahne_no": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 3
+      },
+      "hedef_eslesir": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "tekrar_oyun": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "giris_sn": {
+        "type": "number",
+        "minimum": 0
+      },
+      "giris_degisiklik": {
+        "type": "number",
+        "minimum": 0
+      },
+      "onceki_b_sayisi": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2
+      },
+      "onceki_karar_suresi_sn": {
+        "type": "number",
+        "minimum": 0
+      },
+      "onceki_ipucu_acti": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "onceki_tutor_mesaj": {
+        "type": "number",
+        "minimum": 0
+      },
+      "onceki_aciklama_sn": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "seviye",
+      "sahne_no",
+      "hedef_eslesir",
+      "tekrar_oyun",
+      "giris_sn",
+      "giris_degisiklik",
+      "onceki_b_sayisi",
+      "onceki_karar_suresi_sn",
+      "onceki_ipucu_acti",
+      "onceki_tutor_mesaj",
+      "onceki_aciklama_sn"
+    ],
+    "additionalProperties": false
+  },
+  "response_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "p": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "mudahale": {
+        "type": "boolean"
+      },
+      "model_version": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "p",
+      "mudahale"
+    ]
+  },
+  "eval": {
+    "method": "Bekletilen test seti (spec §10.8): model dondurulmuş eğitim oturumlarıyla eğitildi, eğitimden sonra toplanan ve eğitimde hiç kullanılmayan gerçek oturumlarda bir kez ölçüldü",
+    "gate": {
+      "roc_auc_min": 0.65,
+      "recall_b_min": 0.6,
+      "onnx_tolerance": 0.0001,
+      "spec": "spec.md §10.4"
+    },
+    "passed": true,
+    "metrics": {
+      "roc_auc": 0.7148,
+      "roc_auc_ga95": [
+        0.5,
+        0.8492
+      ],
+      "recall_b": 0.8182,
+      "precision_b": 0.375,
+      "accuracy": 0.6667,
+      "mudahale_orani": 0.4706,
+      "n_satir": 51,
+      "n_oturum": 17,
+      "n_b": 11
+    }
+  },
+  "training_data": {
+    "file": "data/oturumlar.csv",
+    "sha256": "22b8136245bba7b2850ec9c25c5d4e0559a9e3a6c3f9b13d2dd09c5fc8d10f50",
+    "egitim_oturum": 31,
+    "egitim_satir": 93,
+    "test_oturum": 17,
+    "test_satir": 51,
+    "test_b": 11,
+    "sentetik_oturum": 100,
+    "sentetik_satir": 300,
+    "egitim_aciklama": "Eğitim: 31 gerçek oturum, 93 karar (Veri Toplama Modu, `data/v21_egitim_oturumlari.txt`). Test: eğitimden sonra toplanan 17 gerçek oturum, 51 karar; eğitimde kullanılmadı.",
+    "sentetik_aciklama": "v2.1'in eğitiminde kullanılmadı (spec §10.8); yalnız boru hattı denemesi için.",
+    "test_hizli_oturum": 11,
+    "test_karar_suresi_medyan": 1.2,
+    "egitim_karar_suresi_medyan": 7.5
+  },
+  "seed": 13,
+  "environment": {
+    "python": "3.14",
+    "scikit-learn": "1.9.1",
+    "skl2onnx": "1.20.0",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.31.1"
+  }
+}

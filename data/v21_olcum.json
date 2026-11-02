@@ -1,0 +1,37 @@
+{
+  "surum": "2.1",
+  "spec": "spec.md §10.8",
+  "test_oturumlari": [
+    "1164a372",
+    "16059037",
+    "19bfb4b7",
+    "1ce94fbd",
+    "46785223",
+    "47d9a546",
+    "63b73322",
+    "6526f860",
+    "75807eb9",
+    "9da89e34",
+    "b914ab8e",
+    "bb015a0d",
+    "c3f14fa1",
+    "e08e9181",
+    "ed368fe1",
+    "f94deb09",
+    "fe4c11a9"
+  ],
+  "metrikler": {
+    "roc_auc": 0.7148,
+    "roc_auc_ga95": [
+      0.5,
+      0.8492
+    ],
+    "recall_b": 0.8182,
+    "precision_b": 0.375,
+    "accuracy": 0.6667,
+    "mudahale_orani": 0.4706,
+    "n_satir": 51,
+    "n_oturum": 17,
+    "n_b": 11
+  }
+}

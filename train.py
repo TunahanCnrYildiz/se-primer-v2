@@ -263,7 +263,9 @@ Hepsi sahneye girişte bilinen bilgilerdir. Bu sahnedeki karar süresi ya da ipu
 
 ## Sınırlar
 
-- Ölçüm küçük bir örneklemde yapıldı. Güven aralığı geniştir; tek bir sayıya güvenmeyin.
+- Ölçüm küçük bir örneklemde yapıldı. Güven aralığı geniştir (alt ucu yazı-tura düzeyine, 0.50'ye yakın olabilir); tek bir sayıya güvenmeyin.
+- Test setinin {v.get("test_hizli_oturum", 0)}/{v.get("test_oturum", 0)} oturumunda üç karar da 3 saniyenin altında verildi (test karar süresi ortancası {v.get("test_karar_suresi_medyan", 0)} sn, eğitimde {v.get("egitim_karar_suresi_medyan", 0)} sn). Bu oyuncular senaryoyu daha önce oynamıştı ve metni okumadan geçmiş olabilir; ölçüm, dikkatle ilk kez oynayan oyuncuyu tam temsil etmez.
+- Test setindeki oyuncuların bir kısmı eğitim setindeki oyuncularla aynı kişiler; ayrım kişiye göre değil oturuma göre.
 - Oyuncular ders arkadaşlarıdır (yazılım mühendisliği öğrencileri). Başka bir kitleye genellenmez.
 - "Yeniden oyna" ile gelen oyunlarda oyuncu senaryoyu bilir ve B'yi bilerek seçebilir (kötü sonu görmek için). `tekrar_oyun` bunu girdi olarak taşır; bu oyunlarda yüksek `p` "risk" değil "keşif" anlamına gelebilir.
 - Sentetik üreticinin varsayımı gerçek veriyle çelişti (tekrar oyunlarda oyuncular neredeyse hep A seçti); v2.1'de sentetik veri eğitimden çıkarıldı.
@@ -314,6 +316,10 @@ def main():
                            f"(Veri Toplama Modu, `data/v21_egitim_oturumlari.txt`). Test: eğitimden sonra toplanan "
                            f"{test['oturum'].nunique()} gerçek oturum, {len(test)} karar; eğitimde kullanılmadı.",
         "sentetik_aciklama": "v2.1'in eğitiminde kullanılmadı (spec §10.8); yalnız boru hattı denemesi için.",
+        # Veri kalitesi: üç kararı da 3 sn'nin altında verilen oturum, metni okumadan geçilmiş olabilir.
+        "test_hizli_oturum": int((test.groupby("oturum")["karar_suresi_sn"].max() < 3).sum()),
+        "test_karar_suresi_medyan": round(float(test["karar_suresi_sn"].median()), 1) if len(test) else 0.0,
+        "egitim_karar_suresi_medyan": round(float(egitim_gercek["karar_suresi_sn"].median()), 1),
     }
     print(f"veri: eğitim {veri_ozeti['egitim_oturum']} gerçek oturum · test {veri_ozeti['test_oturum']} oturum "
           f"({veri_ozeti['test_b']} B) · {veri_ozeti['sentetik_oturum']} sentetik oturum")
