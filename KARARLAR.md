@@ -212,3 +212,9 @@ Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Ner
 - **Gerekçe:** v2.0'ın verisini yeniden ölçmek optional stopping olurdu. Model hiç görmediği verilerle bir kez sınandığında, veriyi gördükten sonra yapılan değişiklik (sentetik verinin çıkarılması) da meşru biçimde test edilmiş olur.
 - **Vazgeçilen:** v2.0'ın ölçümlerini "deneme" saymak ya da kayıttan çıkarmak (sonucu gizlemek olurdu); eşiği düşürmek; sentetik üreticiyi gerçek veriye göre ayarlayıp eğitimde tutmak (aynı veriyle doğrulanamazdı).
 - **Nerede:** [spec.md §10.8](spec.md#108-v21-bağımsız-test-setiyle-tek-ölçüm) · [data/v21_egitim_oturumlari.txt](data/v21_egitim_oturumlari.txt) · [train.py](train.py)
+
+### K-38 · v2.1 kapıyı geçti ve yayınlandı
+- **Bağlam:** v2.1'in test setinde ön koşul (≥ 15 oturum, ≥ 8 B) 17 oturum ve 11 B ile sağlandı; ölçüm kurala göre o anda bir kez yapıldı.
+- **Karar:** ROC-AUC 0.715 (%95 GA 0.50–0.85), B-duyarlılığı 0.818 → geçti. Model Hugging Face'e yüklendi (commit `7468f86b`, etiket `v2.1`), uygulama (`MODEL_COMMIT`) ve sunucu (Render) aynı commit'e bağlandı.
+- **Gerekçe:** Sonuç, önceden yazılmış kurala göre bağlayıcı. Model kartına sınırlar yazıldı: güven aralığının alt ucu 0.50'ye iniyor, test oyuncularının çoğu senaryoyu daha önce oynamıştı ve bir kısmı eğitimdeki oyuncularla aynı kişiler.
+- **Nerede:** [RELEASE.md](RELEASE.md) · [model/README.md](model/README.md)

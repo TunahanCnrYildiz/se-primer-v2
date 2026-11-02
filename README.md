@@ -5,10 +5,10 @@
 | | |
 |---|---|
 | ▶️ **Uygulama** (telefonda aç, giriş gerekmez) | https://se-primer-v2.ai.studio |
-| 🤗 **Model** (Hugging Face, commit'e sabit) | ⏳ DOLDURULACAK: `https://huggingface.co/TunahanCnr/se-primer-v2/tree/<commit>` |
+| 🤗 **Model v2.1** (Hugging Face, commit'e sabit) | https://huggingface.co/TunahanCnr/se-primer-v2/tree/7468f86b263b779b55c05f11735eb80f08f6618f |
 | 🎬 **Demo videosu** (60–90 sn) | ⏳ DOLDURULACAK |
 | 📦 **Sürüm notları, dağıtım kararı, geri alma** | [RELEASE.md](RELEASE.md) |
-| 🖥️ **Sunucu tüketicisi** (bonus) | ⏳ DOLDURULACAK: Render adresi |
+| 🖥️ **Sunucu tüketicisi** (bonus) | https://se-primer-v2-api.onrender.com (`POST /predict`; ücretsiz plan, ilk istekte uyanması sürebilir) |
 
 Geçen haftanın sürümü (v1) ayrı repoda ve adreste olduğu gibi duruyor: [se-primer](https://github.com/TunahanCnrYildiz/se-primer) · https://se-primer.ai.studio
 
@@ -27,7 +27,7 @@ npm --prefix app install
 | Ne | Komut | Sonuç |
 |---|---|---|
 | Eğit, ölç, paketle | `python train.py` | Veriyi hazırlar, eğitir, eval kapısından geçirir. Geçerse `model/` (model.onnx, config.json, model kartı). Geçmezse hata koduyla durur, `model/`'e dokunmaz |
-| Yayınla | `python yayinla.py` | Yalnız kapıdan geçmiş modeli Hugging Face'e yükler, `v2.0` etiketi koyar, commit'i `model/yayin.json`'a yazar |
+| Yayınla | `python yayinla.py` | Yalnız kapıdan geçmiş modeli Hugging Face'e yükler, sürüm etiketini (`v2.1`) koyar, commit'i `model/yayin.json`'a yazar |
 | Python oracle | `python tests/parite.py` | 5 referans girdiyi commit'e sabit modelle hesaplar, `tests/parite.json` ile karşılaştırır (`--sunucu <adres>` ile sunucuyu da) |
 | Uygulama | `npm --prefix app run dev` | http://localhost:3000. Gemini anahtarı yoksa tutor sabit ipuçlarına düşer |
 | E2E testler | `npm test` (uygulama açıkken) | Regresyon (v1'in 28 testi) + 8 yol gerçek modelle + KÖ-9/10/11, gölge mod + parite |
@@ -38,7 +38,7 @@ npm --prefix app install
 ```
 Veri Toplama Modu (?veri=1)          train.py                         yayinla.py
 arkadaş oyunları → CSV ──► data/ham ──► hazırla → eğit → ÖLÇ ──► kapı ──► Hugging Face
-                                         (5 katlı, oturuma göre)   │       (commit + v2.0 etiketi)
+                                   (bekletilen test seti, bir kez) │       (commit + v2.1 etiketi)
                                                                    ✗ → durur, model yayınlanmaz
                                                                            │ resolve/<commit>/model.onnx
                         ┌──────────────────────────────────┬───────────────┴─────────────────┐
@@ -51,11 +51,11 @@ arkadaş oyunları → CSV ──► data/ham ──► hazırla → eğit → �
 
 | Ödev adımı | Ne yapıldı | Kanıt |
 |---|---|---|
-| **1 · Spec** | Model gereksinimi, 11 girdi (yalnız sahneye girişte bilinenler), eval metriği ve kabul eşiği, 3 yeni kabul örneği (KÖ-9/10/11). Eşik **eğitimden önce** commit'lendi: `227eb23` (1 Kasım 2026, 12:09). Gerçek veri gelmeden önce 3 girdi eklendi, eşik aynı kaldı: `fb0675b` | [spec.md §10](spec.md#10-uyarlamalı-model-v2) |
-| **2 · Veri** | Veri Toplama Modu (gölge mod: model çalışır, müdahale etmez), her karar bir satır, `kaynak` sütunu, KVKK. ⏳ DOLDURULACAK: N gerçek oturum | [data/oturumlar.csv](data/oturumlar.csv) · [data/SOZLUK.md](data/SOZLUK.md) |
-| **3 · Eğitim + eval kapısı** | Tek komut, sabit tohum (13), sabit paket sürümleri, çıktılar bayt bayt tekrarlanabilir. Eşik altında hata kodu | [train.py](train.py) |
+| **1 · Spec** | Model gereksinimi, 11 girdi (yalnız sahneye girişte bilinenler), eval metriği ve kabul eşiği, 3 yeni kabul örneği (KÖ-9/10/11). Eşik **eğitimden önce** commit'lendi: `227eb23` (1 Kasım 2026, 12:09). Gerçek veri gelmeden önce 3 girdi eklendi, eşik aynı kaldı: `fb0675b`. v2.0 reddedildikten sonra v2.1'in tek ölçüm kuralı test verisinden önce yazıldı: `9b4f4bd` | [spec.md §10](spec.md#10-uyarlamalı-model-v2) |
+| **2 · Veri** | Veri Toplama Modu (gölge mod), her karar bir satır, `kaynak` sütunu, KVKK. **48 gerçek oturum, 144 karar** (eğitim 31 oturum / 16 kişi, test 17 oturum) + 100 sentetik oturum | [data/oturumlar.csv](data/oturumlar.csv) · [data/SOZLUK.md](data/SOZLUK.md) · [data/ham/](data/ham/) |
+| **3 · Eğitim + eval kapısı** | Tek komut, sabit tohum (13), sabit paket sürümleri, çıktılar bayt bayt tekrarlanabilir. Kapı gerçekten çalıştı: v2.0'ı iki kez durdurdu, v2.1 bekletilen test setinde geçti | [train.py](train.py) · [RELEASE.md](RELEASE.md#ölçümlerin-kronolojisi) |
 | **4 · Artefakt** | `model.onnx` + `config.json` (özellik sırası, etiketler, metrikler, istek/yanıt JSON şeması) + model kartı | [model/](model/) |
-| **5 · Yayın** | Hugging Face public repo, commit'e sabit URL, `v2.0` etiketi, Shadow/Canary/Progressive planı, ödünleşim matrisi, geri alma | [RELEASE.md](RELEASE.md) |
+| **5 · Yayın** | Hugging Face public repo, commit'e sabit URL, `v2.1` etiketi, reddedilen v2.0'ın kaydı, Shadow/Canary/Progressive planı, ödünleşim matrisi (ölçülmüş gecikmelerle), geri alma | [RELEASE.md](RELEASE.md) |
 | **6 · Tüketim + test** | Tarayıcıda çıkarım, model kararı oyunu değiştiriyor. Python oracle, Cypress parite + regresyon, sunucu tüketicisi | [tests/](tests/) · [cypress/](cypress/) · [sunucu/](sunucu/) |
 | **7 · Sınav tasarımı** | Kendi yaşadığım bir olaydan senaryo sorusu: iki geliştirici "sunucudaki vektör deposu benimkiyle aynı mı?" sorusunu cevaplamaya çalışıyor. Test kâhini, diferansiyel test, hata toleransı, doğrulama ve geçerleme; beklenen kavramlar ve çeldiriciler | [SINAV_TASARIMI.md](SINAV_TASARIMI.md) |
 
@@ -65,14 +65,15 @@ arkadaş oyunları → CSV ──► data/ham ──► hazırla → eğit → �
 - **Neden bu hedef:** v1'in açık sorusu (B7) oyuncunun kararlarını sorgulamamasıydı. Desteğin en çok işe yaradığı an, oyuncu bedelli bir kararı vermek üzereyken. Gereksiz bir ipucunun bedeli, kaçırılan riskli bir kararınkinden düşük; bu yüzden kapı B-duyarlılığına da bakar.
 - **Girdiler:** seviye, sahne, hedef–sahne eşleşmesi, tekrar oyun mu, giriş ekranında geçen süre ve cevap değiştirme sayısı, önceki sahnelerdeki B sayısı, karar süresi, ipucu açma, tutor isteği, açıklama ekranında kalma süresi. Bu sahnede oluşan hiçbir bilgi girdi değildir (sızıntı). Tanımlar: [data/SOZLUK.md](data/SOZLUK.md).
 - **Model:** `StandardScaler → LogisticRegression(class_weight="balanced")`, `sklearn → ONNX` (opset 17, girdi `input`, çıktı `probabilities`).
-- **Kapı (spec §10.4):** Yalnız gerçek oturumlarda, oturuma göre gruplanmış 5 katlı çapraz doğrulama. ROC-AUC ≥ 0.65 ve B-duyarlılığı ≥ 0.60, ONNX ile sklearn farkı ≤ 1e-4. Ön koşul: ≥ 15 gerçek oturum ve ≥ 8 gerçek B.
-- **Sonuç:** ⏳ DOLDURULACAK (metrikler, güven aralığı, kapı sonucu). Ayrıntı: [model/README.md](model/README.md).
+- **Kapı:** ROC-AUC ≥ 0.65 ve B-duyarlılığı ≥ 0.60, ONNX ile sklearn farkı ≤ 1e-4.
+- **v2.0 · reddedildi (spec §10.4):** Gerçek + sentetik veriyle eğitim, gerçek oturumlarda 5 katlı gruplanmış çapraz doğrulama. 1. ölçüm (17 oturum) ROC-AUC 0.618; önceden yazılan tek ve son 2. ölçüm (31 oturum) ROC-AUC 0.643, B-duyarlılığı 0.579 → geçemedi, yayınlanmadı.
+- **v2.1 · yayında (spec §10.8):** 31 gerçek oturumla eğitim (sentetik yok), eğitimden sonra toplanan 17 oturumda bir kez ölçüm: **ROC-AUC 0.715** (%95 GA 0.50–0.85), **B-duyarlılığı 0.818**, B-kesinliği 0.375 → geçti. Sınırlar (küçük örneklem, test oyuncularının senaryoyu önceden bilmesi): [model/README.md](model/README.md).
 
 ## Veri
 
 **Gerçek veri:** Oyunun `?veri=1` adresiyle açılan Veri Toplama Modu, her kararı bir satır olarak kaydeder ve son ekranda oyuncunun kendisinin indirip gönderdiği bir CSV üretir. Sunucuya hiçbir şey yazılmaz. Ad, e-posta, cihaz kimliği, IP ve konum toplanmaz; oturum kimliği her oyunda tarayıcıda rastgele üretilir; tutor mesajlarının metni değil yalnız sayısı tutulur. Arkadaşlardan gelen dosyalar `data/ham/` klasöründe.
 
-**Sentetik veri:** Boru hattını gerçek veri gelmeden kurmak ve eğitimde gerçek veriyi desteklemek için. **Hiçbir ölçüme girmez.** Üretici `data/hazirla.py` → `sentetik_veri()`, **tohum 13**, **100 oturum**:
+**Sentetik veri:** Boru hattını gerçek veri gelmeden kurmak için; v2.0'da eğitime de girdi. **Hiçbir ölçüme girmedi.** v2.0'ın ilk ölçümünde, tekrar oyunlarda oyuncuların neredeyse hep A seçtiği görüldü; üretici bunun tersini varsayıyordu. Bu yüzden v2.1'in eğitiminde sentetik veri yok. Üretici `data/hazirla.py` → `sentetik_veri()`, **tohum 13**, **100 oturum**:
 
 - Her oyuncunun gizli bir risk eğilimi vardır: `r ~ N(0, 1)`. Seviye, rol ve hedef eşit olasılıkla seçilir.
 - Oyunların %35'i tekrar oyundur (`oyun_no = 2 + Poisson(0.3)`), kalanı ilk oyun.
@@ -87,12 +88,14 @@ Katsayılar gerçek oyuncudan tahmin edilmedi, makul görülen yönler seçildi.
 
 | Test | Ne kanıtlar | Sonuç |
 |---|---|---|
-| ONNX ↔ sklearn (`train.py`) | Dağıtılan dosya eğitilen modelle aynı sayıyı verir | ⏳ DOLDURULACAK |
-| Parite: tarayıcı ↔ Python (`cypress/e2e/parite.cy.js`) | İki bağımsız çalışma zamanı aynı model ve girdiyle aynı olasılığı verir (diferansiyel test, kâhin = Python) | ⏳ DOLDURULACAK |
-| Parite: sunucu ↔ Python (`tests/parite.py --sunucu`) | Bonus tüketici aynı sayıyı verir | ⏳ DOLDURULACAK |
-| Regresyon (v1'in 28 testi, `MODEL_P=0`) | Model "risk yok" dediğinde v1 kuralları aynen geçerli | ⏳ DOLDURULACAK |
-| 8 yol, gerçek modelle | Müdahale olsa da karar mantığı, saatler ve sonlar değişmez | ⏳ DOLDURULACAK |
-| KÖ-9/10/11 + gölge mod (`cypress/e2e/model.cy.js`) | Müdahale davranışı, model yokken v1'e dönüş, veri modunda müdahale olmaması | ⏳ DOLDURULACAK |
+| ONNX ↔ sklearn (`train.py`) | Dağıtılan dosya eğitilen modelle aynı sayıyı verir | ✅ en büyük fark 8.1e-8 |
+| Parite: tarayıcı ↔ Python (`cypress/e2e/parite.cy.js`) | İki bağımsız çalışma zamanı aynı model ve girdiyle aynı olasılığı verir (diferansiyel test, kâhin = Python) | ✅ 5/5, en büyük \|Δ\| 2.7e-8 ([kanıt](tests/parite-tarayici.json)) |
+| Parite: sunucu ↔ Python (`tests/parite.py --sunucu`) | Bonus tüketici (Render) aynı sayıyı verir | ✅ 5/5, en büyük \|Δ\| 8.7e-8 ([kanıt](tests/parite-sunucu.txt)) |
+| Regresyon (v1'in 28 testi, `MODEL_P=0`) | Model "risk yok" dediğinde v1 kuralları aynen geçerli | ✅ 28/28 |
+| 8 yol, gerçek modelle | Müdahale olsa da karar mantığı, saatler ve sonlar değişmez | ✅ 8/8 |
+| KÖ-9/10/11 + gölge mod (`cypress/e2e/model.cy.js`) | Müdahale davranışı, model yokken v1'e dönüş, veri modunda müdahale olmaması | ✅ 4/4 |
+
+`npm test`: **41/41**, v2.1 modeli Hugging Face'ten commit'e sabit adresle indirilerek (2 Kasım 2026).
 
 KÖ-9/10'da olasılık `?p=` test kancasıyla sabitlenir: Bu testler modelin *davranışını* sınar, *sayısal doğruluğunu* parite testi sınar.
 
@@ -104,7 +107,9 @@ KÖ-9/10'da olasılık `?p=` test kancasıyla sabitlenir: Bu testler modelin *da
 │   ├── oturumlar.csv       eğitim verisi, her karar bir satır (gerçek + sentetik, kaynak sütunu)
 │   ├── SOZLUK.md           veri sözlüğü
 │   ├── hazirla.py          ham dosyaları doğrular, sentetik üretir, girdileri türetir
-│   └── ham/                Veri Toplama Modu'ndan gelen CSV'ler
+│   ├── ham/                Veri Toplama Modu'ndan gelen CSV'ler (48 oturum)
+│   ├── v21_egitim_oturumlari.txt   v2.1'in dondurulmuş eğitim seti (31 oturum)
+│   └── v21_olcum.json      v2.1'in tek ölçümünün kilidi (test oturumları + metrikler)
 ├── train.py                eğit → ölç → kapı → paketle
 ├── model/                  model.onnx, config.json, README.md (model kartı), yayin.json (commit)
 ├── yayinla.py              Hugging Face'e yükleme ve doğrulama
@@ -142,7 +147,7 @@ KÖ-9/10'da olasılık `?p=` test kancasıyla sabitlenir: Bu testler modelin *da
 
 Projeyi ben yönettim: hedefi, kabul kapısını ve kapsamı ben belirledim, araçların çıktısını kendim denedim ya da testlerle doğrulattım. Kodu ve belge taslaklarını araçlar yazdı. Kararların gerekçeleri ve vazgeçilen seçenekler [KARARLAR.md](KARARLAR.md#v2--uyarlamalı-model) (K-24 … K-35).
 
-1. **Kararlar (ben):** Modelin hedefi (bedelli seçim riski), repo ve uygulama stratejisi, bonusun hedeflenmesi benim kararım. Kabul eşiğini (ROC-AUC ≥ 0.65, B-duyarlılığı ≥ 0.60, `class_weight="balanced"`) Claude Code önerdi; gerekçesini (küçük örneklemde AUC'nin standart hatası) sorgulayarak onayladım ve eşik eğitimden önce commit'lendi. Gerçek veri toplanmadan önce model girdilerinin genişletilmesine (spec 2.1) ben izin verdim.
+1. **Kararlar (ben):** Modelin hedefi (bedelli seçim riski), repo ve uygulama stratejisi, bonusun hedeflenmesi benim kararım. Kabul eşiğini (ROC-AUC ≥ 0.65, B-duyarlılığı ≥ 0.60, `class_weight="balanced"`) Claude Code önerdi; gerekçesini (küçük örneklemde AUC'nin standart hatası) sorgulayarak onayladım ve eşik eğitimden önce commit'lendi. Gerçek veri toplanmadan önce model girdilerinin genişletilmesine (spec 2.1) ben izin verdim. v2.0 ilk ölçümde geçemeyince "tek ve son ikinci ölçüm" kuralını, o da geçemeyince bekletilen test setiyle v2.1'i, ilgili ölçümlerden önce onayladım.
 2. **Claude Code (Anthropic) · eğitim, test ve yayın:** Spec §10 taslağı, veri hazırlama ve sentetik üretici, `train.py`, `yayinla.py`, `tests/parite.py`, Cypress testleri, FastAPI sunucusu, README ve RELEASE taslakları bu araçla yazıldı. AI Studio'ya verdiğim prompt'ları da o hazırladı ve AI Studio'dan indirdiğim kodu spec'e göre inceledi. `SINAV_TASARIMI.md`'deki senaryo kendi yaşadığım bir olay; ölçümleri ve kavramlara verdiğim cevapları ben kurdum, Claude Code ile tartışarak netleştirdim ve yazıya döktürdüm.
 3. **Google AI Studio (Gemini) · uygulama:** `app/` yalnız üç prompt'la değiştirildi: Veri Toplama Modu, giriş ekranı ölçümleri, onnxruntime-web ile çıkarım ve müdahale ([ai-studio-v2.md](ai-studio-v2.md)). Her prompt'tan sonra kontrol listesini yayındaki adreste kendim denedim (indirdiğim CSV'ler, ekran görüntüleri). Uygulama kodunu elle değiştirmedim.
 4. **Düzelttirdiklerim:** "Ödevin yönergelerine uyuyor muyuz?" diye sorguladığımda ajanın çıktısında iki uyumsuzluk çıktı: Cypress testleri ödevin istediği kökteki `cypress/` yerine `e2e/cypress/` altındaydı ve `train.py` tek komutla çalışmıyordu; ikisini düzelttirdim. Başlangıç reposunun rolünü sorgulamam, oradan uyarlanan kodun kaynağının README'ye yazılmasını sağladı. Ajanın verdiği Hugging Face giriş komutu PowerShell'de çalışmadı; hatayı fark edip bildirdim.
