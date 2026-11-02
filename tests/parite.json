@@ -1,0 +1,105 @@
+{
+  "tolerance": 0.0001,
+  "model_source": "https://huggingface.co/TunahanCnr/se-primer-v2/resolve/7468f86b263b779b55c05f11735eb80f08f6618f/model.onnx",
+  "model_sha256": "05ea6c401cc8f94cf9c7e7a68fde2244b9abb99994c39f28761c0fdb1904fbd7",
+  "feature_order": [
+    "seviye",
+    "sahne_no",
+    "hedef_eslesir",
+    "tekrar_oyun",
+    "giris_sn",
+    "giris_degisiklik",
+    "onceki_b_sayisi",
+    "onceki_karar_suresi_sn",
+    "onceki_ipucu_acti",
+    "onceki_tutor_mesaj",
+    "onceki_aciklama_sn"
+  ],
+  "cases": [
+    {
+      "name": "K1 · yeni başlayan, ilk oyun, girişte acele etmedi",
+      "input": {
+        "seviye": 0,
+        "sahne_no": 1,
+        "hedef_eslesir": 1,
+        "tekrar_oyun": 0,
+        "giris_sn": 34.2,
+        "giris_degisiklik": 2,
+        "onceki_b_sayisi": 0,
+        "onceki_karar_suresi_sn": 0,
+        "onceki_ipucu_acti": 0,
+        "onceki_tutor_mesaj": 0,
+        "onceki_aciklama_sn": 0
+      },
+      "p": 0.79695153
+    },
+    {
+      "name": "K2 · deneyimli, K1'de hızlı B, açıklamayı okumadı",
+      "input": {
+        "seviye": 2,
+        "sahne_no": 2,
+        "hedef_eslesir": 0,
+        "tekrar_oyun": 0,
+        "giris_sn": 6.1,
+        "giris_degisiklik": 0,
+        "onceki_b_sayisi": 1,
+        "onceki_karar_suresi_sn": 4.3,
+        "onceki_ipucu_acti": 0,
+        "onceki_tutor_mesaj": 0,
+        "onceki_aciklama_sn": 1.2
+      },
+      "p": 0.81386083
+    },
+    {
+      "name": "K2 · biraz deneyimli, K1'de düşünerek A, tutor'a sordu",
+      "input": {
+        "seviye": 1,
+        "sahne_no": 2,
+        "hedef_eslesir": 1,
+        "tekrar_oyun": 0,
+        "giris_sn": 21.7,
+        "giris_degisiklik": 1,
+        "onceki_b_sayisi": 0,
+        "onceki_karar_suresi_sn": 38.5,
+        "onceki_ipucu_acti": 1,
+        "onceki_tutor_mesaj": 2,
+        "onceki_aciklama_sn": 17.9
+      },
+      "p": 0.02692118
+    },
+    {
+      "name": "K3 · tekrar oyun, önceki iki sahnede B",
+      "input": {
+        "seviye": 1,
+        "sahne_no": 3,
+        "hedef_eslesir": 0,
+        "tekrar_oyun": 1,
+        "giris_sn": 2.4,
+        "giris_degisiklik": 0,
+        "onceki_b_sayisi": 2,
+        "onceki_karar_suresi_sn": 3.1,
+        "onceki_ipucu_acti": 0,
+        "onceki_tutor_mesaj": 0,
+        "onceki_aciklama_sn": 0.9
+      },
+      "p": 0.41394979
+    },
+    {
+      "name": "K3 · deneyimli, K2'de süre doldu (60 sn), hedefi KVKK",
+      "input": {
+        "seviye": 2,
+        "sahne_no": 3,
+        "hedef_eslesir": 1,
+        "tekrar_oyun": 0,
+        "giris_sn": 12.0,
+        "giris_degisiklik": 3,
+        "onceki_b_sayisi": 1,
+        "onceki_karar_suresi_sn": 60.0,
+        "onceki_ipucu_acti": 1,
+        "onceki_tutor_mesaj": 1,
+        "onceki_aciklama_sn": 8.4
+      },
+      "p": 0.62263083
+    }
+  ]
+}
