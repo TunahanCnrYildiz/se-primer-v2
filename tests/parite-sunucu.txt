@@ -1,0 +1,15 @@
+# Bonus: sunucu tüketicisi (Render, FastAPI) ↔ Python oracle
+# Komut: python tests/parite.py --sunucu https://se-primer-v2-api.onrender.com
+# Tarih: 2026-11-02 14:11 +0300
+
+✓ K1 · yeni başlayan, ilk oyun, girişte acele etmedi
+    oracle 0.796952 · python 0.796952 (|Δ| 2.4e-09) · sunucu 0.796951 (|Δ| 5.7e-08)
+✓ K2 · deneyimli, K1'de hızlı B, açıklamayı okumadı
+    oracle 0.813861 · python 0.813861 (|Δ| 3.6e-09) · sunucu 0.813861 (|Δ| 3.6e-09)
+✓ K2 · biraz deneyimli, K1'de düşünerek A, tutor'a sordu
+    oracle 0.026921 · python 0.026921 (|Δ| 2.9e-09) · sunucu 0.026921 (|Δ| 2.9e-09)
+✓ K3 · tekrar oyun, önceki iki sahnede B
+    oracle 0.413950 · python 0.413950 (|Δ| 2.4e-09) · sunucu 0.413950 (|Δ| 8.7e-08)
+✓ K3 · deneyimli, K2'de süre doldu (60 sn), hedefi KVKK
+    oracle 0.622631 · python 0.622631 (|Δ| 4.6e-09) · sunucu 0.622631 (|Δ| 4.6e-09)
+✓ 5/5 vaka tolerans içinde (< 0.0001)
