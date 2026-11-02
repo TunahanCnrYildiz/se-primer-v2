@@ -1,7 +1,7 @@
 import * as ort from 'onnxruntime-web';
 
 export const MODEL_REPO = 'TunahanCnr/se-primer-v2';
-export const MODEL_COMMIT = '7468f86b263b779b55c05f11735eb80f08f6618f';
+export const MODEL_COMMIT = '37e4ea00f12003733abb01bdf9d0e020b7c1977a';
 
 export interface ModelConfig {
   features: Array<{ name: string }>;
