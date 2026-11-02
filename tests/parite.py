@@ -115,7 +115,7 @@ def main():
             "cases": [{"name": r["ad"], "input": r["girdi"], "p": round(p, 8)}
                       for r, p in zip(REFERANSLAR, p_python)],
         }
-        PARITE.write_text(json.dumps(kayit, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        PARITE.write_text(json.dumps(kayit, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         for r, p in zip(REFERANSLAR, p_python):
             print(f"  p = {p:.6f}  {r['ad']}")
         print(f"✓ {PARITE.relative_to(KOK)} yazıldı (model SHA-256 {sha[:12]}…)")

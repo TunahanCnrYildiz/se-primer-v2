@@ -205,3 +205,28 @@ outside the new elements, or any existing data-cy attribute. Do not change anyth
 3. Parametresiz: `MODEL · —`, oyun v1 ile aynı (model henüz yayında değil, KÖ-11).
 4. `?veri=1&p=0.9`: `p = 0.9000` görünür ama müdahale **yok** (gölge mod). CSV biçimi değişmemiş.
 5. `?model-test=1`: panel açılır, "Hesapla" → "model yüklenemedi" (model henüz yayında değil).
+
+## Prompt 4 · Yayınlanan modeli bağla (v2.1)
+
+Amaç: v2.1 eval kapısını geçti ve Hugging Face'te commit `7468f86b263b779b55c05f11735eb80f08f6618f` olarak yayınlandı (etiket `v2.1`, [RELEASE.md](RELEASE.md)). Uygulama modeli bu commit'e sabit adresten indirir. Geri almak için aynı satır `'YOK'`a çevrilir.
+
+```text
+In src/services/model.ts change exactly one line:
+
+  export const MODEL_COMMIT = 'YOK';
+
+to
+
+  export const MODEL_COMMIT = '7468f86b263b779b55c05f11735eb80f08f6618f';
+
+Do not change anything else.
+```
+
+**Kontrol listesi (yayındaki adreste):**
+1. `?model-test=1`: Kutuya aşağıdaki girdiyi yapıştır → "Hesapla". Sonuç `p = 0.796952` olmalı (Python oracle, `tests/parite.json` 1. vaka).
+   ```
+   {"seviye": 0, "sahne_no": 1, "hedef_eslesir": 1, "tekrar_oyun": 0, "giris_sn": 34.2, "giris_degisiklik": 2, "onceki_b_sayisi": 0, "onceki_karar_suresi_sn": 0, "onceki_ipucu_acti": 0, "onceki_tutor_mesaj": 0, "onceki_aciklama_sn": 0}
+   ```
+2. Parametresiz bir oyun: Her sahnede `MODEL · p = 0.xxxx` sayısı görünür (artık `—` değil). Bazı sahnelerde "DUR VE DÜŞÜN" kartı çıkabilir.
+3. `?veri=1`: Sayı görünür ama "DUR VE DÜŞÜN" kartı hiç çıkmaz, "Deneyimliyim"de sayaç durur (gölge mod). CSV başlığı aynı.
+4. `?model=kapali`: `MODEL · —`, oyun v1 ile aynı (geri alma anahtarı).

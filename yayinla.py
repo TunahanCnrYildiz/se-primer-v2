@@ -96,7 +96,7 @@ def main():
         "config_url": taban + "config.json",
         "sha256": ozetler,
     }
-    YAYIN.write_text(json.dumps(yayin, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    YAYIN.write_text(json.dumps(yayin, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print(f"✓ {YAYIN.relative_to(BURASI)} yazıldı")
     print(f"\nSıradaki adımlar:\n  1) AI Studio: MODEL_COMMIT = '{commit}'\n"
           f"  2) python tests/parite.py --uret   (oracle bu commit'ten indirir)\n"
