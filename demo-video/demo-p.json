@@ -1,0 +1,17 @@
+{
+  "uygulama": "https://se-primer-v2.ai.studio",
+  "kararlar": [
+    {
+      "oyuncu": "Oyuncu 1 (tutor'a danıştı, A seçti)",
+      "sahne": "Karar 2",
+      "p": 0.1547006070613861,
+      "mudahale": false
+    },
+    {
+      "oyuncu": "Oyuncu 2 (danışmadı, hızla B seçti)",
+      "sahne": "Karar 2",
+      "p": 0.8003818988800049,
+      "mudahale": true
+    }
+  ]
+}

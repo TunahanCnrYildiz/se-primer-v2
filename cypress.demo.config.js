@@ -8,10 +8,14 @@ const HEIGHT = 1080;
 export default defineConfig({
   e2e: {
     ...base.e2e,
+    // Demo yayındaki uygulamayı kaydeder: model Hugging Face'ten, tutor gerçek Gemini.
+    baseUrl: 'https://se-primer-v2.ai.studio',
     specPattern: 'cypress/e2e/demo.cy.js',
     video: true,
     // Normal test koşusu kendi çıktı klasörlerini her seferinde temizler; demo videosu ayrı tutulur.
     videosFolder: 'demo-video',
+    // Klasördeki v1 videosu (v1-demo.mp4) silinmesin.
+    trashAssetsBeforeRuns: false,
     // 18 CRF görsel olarak kayıpsıza yakın; varsayılan sıkıştırma küçük yazıları bulanıklaştırıyor.
     videoCompression: 18,
     setupNodeEvents(on) {
