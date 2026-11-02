@@ -1,14 +1,20 @@
 {
   "version": "2.1",
   "repo": "TunahanCnr/se-primer-v2",
-  "commit": "7468f86b263b779b55c05f11735eb80f08f6618f",
-  "tag": "v2.1",
-  "commit_url": "https://huggingface.co/TunahanCnr/se-primer-v2/commit/7468f86b263b779b55c05f11735eb80f08f6618f",
-  "model_url": "https://huggingface.co/TunahanCnr/se-primer-v2/resolve/7468f86b263b779b55c05f11735eb80f08f6618f/model.onnx",
-  "config_url": "https://huggingface.co/TunahanCnr/se-primer-v2/resolve/7468f86b263b779b55c05f11735eb80f08f6618f/config.json",
+  "commit": "37e4ea00f12003733abb01bdf9d0e020b7c1977a",
+  "tag": "v2.1.1",
+  "commit_url": "https://huggingface.co/TunahanCnr/se-primer-v2/commit/37e4ea00f12003733abb01bdf9d0e020b7c1977a",
+  "model_url": "https://huggingface.co/TunahanCnr/se-primer-v2/resolve/37e4ea00f12003733abb01bdf9d0e020b7c1977a/model.onnx",
+  "config_url": "https://huggingface.co/TunahanCnr/se-primer-v2/resolve/37e4ea00f12003733abb01bdf9d0e020b7c1977a/config.json",
   "sha256": {
     "model.onnx": "05ea6c401cc8f94cf9c7e7a68fde2244b9abb99994c39f28761c0fdb1904fbd7",
     "config.json": "8ca8d368b6ec7e56ab0f18900c0a4792a5e709ecf3c6046d28e2fdecbefaaa78",
-    "README.md": "c7be539bc62ddeaa75140549c73ef2e4b539bb122310e536fec09e4fc383917e"
-  }
+    "README.md": "02043e4984e9b32d87afa8626c6c31c3dd3659c2fdaa7ec74a775b6b4ea7a7cb"
+  },
+  "onceki_commitler": [
+    {
+      "commit": "7468f86b263b779b55c05f11735eb80f08f6618f",
+      "neden_degisti": "model kartı: oyuncu kitlesi ve tekrar oyun cümleleri düzeltildi"
+    }
+  ]
 }

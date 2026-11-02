@@ -1,6 +1,6 @@
 {
   "tolerance": 0.0001,
-  "model_source": "https://huggingface.co/TunahanCnr/se-primer-v2/resolve/7468f86b263b779b55c05f11735eb80f08f6618f/model.onnx",
+  "model_source": "https://huggingface.co/TunahanCnr/se-primer-v2/resolve/37e4ea00f12003733abb01bdf9d0e020b7c1977a/model.onnx",
   "model_sha256": "05ea6c401cc8f94cf9c7e7a68fde2244b9abb99994c39f28761c0fdb1904fbd7",
   "feature_order": [
     "seviye",

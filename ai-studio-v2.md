@@ -230,3 +230,21 @@ Do not change anything else.
 2. Parametresiz bir oyun: Her sahnede `MODEL · p = 0.xxxx` sayısı görünür (artık `—` değil). Bazı sahnelerde "DUR VE DÜŞÜN" kartı çıkabilir.
 3. `?veri=1`: Sayı görünür ama "DUR VE DÜŞÜN" kartı hiç çıkmaz, "Deneyimliyim"de sayaç durur (gölge mod). CSV başlığı aynı.
 4. `?model=kapali`: `MODEL · —`, oyun v1 ile aynı (geri alma anahtarı).
+
+## Prompt 5 · Belge düzeltmesi sürümüne geç (v2.1.1)
+
+Amaç: Model kartındaki iki cümle düzeltildi ve Hugging Face'te yama sürümü `v2.1.1` olarak yayınlandı (commit `37e4ea00f12003733abb01bdf9d0e020b7c1977a`). `model.onnx` ve `config.json`, `7468f86b` ile bayt bayt aynı; uygulamanın davranışı değişmez. Tüketiciler tek bir commit'e bağlı kalsın diye uygulama da yeni commit'e geçer.
+
+```text
+In src/services/model.ts change exactly one line:
+
+  export const MODEL_COMMIT = '7468f86b263b779b55c05f11735eb80f08f6618f';
+
+to
+
+  export const MODEL_COMMIT = '37e4ea00f12003733abb01bdf9d0e020b7c1977a';
+
+Do not change anything else.
+```
+
+**Kontrol listesi:** `?model-test=1` panelinin üstünde yeni commit yazar; Prompt 4'teki girdiyle sonuç yine `p = 0.796952`.
