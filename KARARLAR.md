@@ -198,3 +198,10 @@ Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Ner
 ### K-35 · Parite için iki tarafta aynı çalışma zamanı sürümü
 - **Karar:** Tarayıcıda onnxruntime-web 1.31.1, Python ve sunucuda onnxruntime 1.31.1; tolerans 1e-4.
 - **Gerekçe:** Farkın kaynağı sürüm farkı değil yalnız platform (float32, WebAssembly) olsun. Tolerans sıfır değil, çünkü ondalıklı sayılarda farklı çalışma zamanları birebir aynı biti üretmek zorunda değil.
+
+### K-36 · İlk ölçüm geçilemedi; tek ve son bir ölçüm daha
+- **Bağlam:** 17 gerçek oturumla (9 kişi, 11 B) kapı ölçüldü: ROC-AUC 0.618 (%95 GA 0.32–0.88), B-duyarlılığı 0.545. Güven aralığı, modelin iyi mi kötü mü olduğunu ayırt edemeyecek kadar genişti.
+- **Karar:** Spec 2.1'deki yol izlendi (sürüm reddedildi, daha çok veri toplandı) ve ölçümün **yalnız bir kez daha** yapılacağı koşul, ölçümden önce spec'e yazıldı: ≥ 30 gerçek oturum ya da 4 Kasım 20:00. Sonuç bağlayıcı; üçüncü ölçüm yok.
+- **Gerekçe:** Her yeni partide yeniden ölçmek (optional stopping), şans eseri geçen bir ölçümü "sonuç" saymaya götürür. Ölçüm sayısını önceden sınırlamak bunu engeller.
+- **Vazgeçilen:** Eşiği düşürmek, sentetik üreticiyi gerçek veriye göre düzeltmek (ilk ölçümde tekrar oyunların neredeyse hep A seçtiği görüldü, sentetik varsayımın tersi), her partide ölçmek. Hepsi ölçümü sonuca göre eğmek olurdu.
+- **Nerede:** [spec.md §10.4](spec.md#104-eval-kapısı-kabul-kriteri)

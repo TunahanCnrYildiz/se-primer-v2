@@ -1,6 +1,8 @@
 # SE Primer — Spesifikasyon
 
-> Sürüm: 2.1 · Tarih: 1 Kasım 2026 · Gerçek veri toplanmadan önce 3 girdi eklendi ve kapı geçilemezse ne olacağı yazıldı (§10.2, §10.4). **Eşik değişmedi.**
+> Sürüm: 2.2 · Tarih: 2 Kasım 2026 · İlk ölçüm kapıyı geçemedi; ikinci ve son ölçümün koşulu, ölçümden önce yazıldı (§10.4). **Eşik, girdiler ve yöntem değişmedi.**
+>
+> Sürüm 2.1 (1 Kasım 2026): Gerçek veri toplanmadan önce 3 girdi eklendi ve kapı geçilemezse ne olacağı yazıldı (§10.2, §10.4).
 >
 > Sürüm 2.0 (1 Kasım 2026): uyarlamalı model eklendi (bkz. §10). Eşik eğitimden önce yazıldı.
 >
@@ -370,6 +372,14 @@ Bu bölüm **eğitimden önce** yazıldı. Eşiği geçmeyen model yayınlanmaz:
 1. v2.0 reddedilir: `model/` klasörüne yazılmaz, Hugging Face'e yüklenmez. Ölçülen metrikler ve güven aralığı `RELEASE.md`'ye "reddedilen sürüm" olarak yazılır.
 2. Uygulama v1 kurallarıyla çalışmaya devam eder (KÖ-11'deki davranış).
 3. Daha fazla gerçek oturum toplanır ve **aynı kapıyla, aynı yöntemle** yeniden denenir. Eşik, girdiler, model türü ve sentetik üretici, gerçek veri görüldükten sonra kapıyı geçmek için değiştirilmez. Bunlardan biri değişirse yeni sürüm olarak spec'e gerekçesiyle yazılır ve ölçüm yeni toplanan verilerle yapılır.
+
+**İlk ölçüm ve ikinci, son ölçüm** (2.2'de, ikinci ölçümden önce yazıldı):
+
+- **İlk ölçüm (2 Kasım 2026, 17 gerçek oturum, 9 kişi, 11 B):** ROC-AUC 0.618 (%95 GA 0.32–0.88), B-duyarlılığı 0.545. Kapı geçilemedi, model üretilmedi.
+- **Neden "son" ölçüm:** Her yeni dosyada yeniden ölçmek, şans eseri eşiği bir kez aşan ölçümü yakalamak demektir (optional stopping). Bu yüzden kapı yalnız **bir kez daha** ölçülür.
+- **Koşul:** En az 30 gerçek oturum ya da 4 Kasım 2026 20:00, hangisi önce gelirse. O andaki bütün gerçek veriyle, aynı kapı (ROC-AUC ≥ 0.65, B-duyarlılığı ≥ 0.60), aynı yöntem, aynı girdiler ve aynı sentetik üretici.
+- **Sonuç bağlayıcıdır:** Geçilirse v2.0 yayınlanır. Geçilemezse v2.0 reddedilmiş olarak teslim edilir: Hugging Face'e yükleme yapılmaz, uygulama v1 kurallarıyla çalışır, iki ölçüm de `RELEASE.md`'de raporlanır. Bu sürümde üçüncü ölçüm yapılmaz.
+- **Şeffaflık notu:** Bu koşul, ikinci ölçümde kullanılacak son 14 oturum gelmeden önce önerildi; dosyalar geldikten sonra, ölçüm yapılmadan commit'lendi. O sırada 31 oturum vardı, yani koşul commit anında sağlanmıştı.
 
 ### 10.5 Veri Toplama Modu (gölge mod)
 
