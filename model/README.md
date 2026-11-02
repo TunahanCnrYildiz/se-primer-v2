@@ -64,7 +64,7 @@ Bekletilen test seti (spec §10.8): model dondurulmuş eğitim oturumlarıyla e�
 ## Sınırlar
 
 - Ölçüm küçük bir örneklemde yapıldı. Güven aralığı geniştir (alt ucu yazı-tura düzeyine, 0.50'ye yakın olabilir); tek bir sayıya güvenmeyin.
-- Test setinin 11/17 oturumunda üç karar da 3 saniyenin altında verildi (test karar süresi ortancası 1.2 sn, eğitimde 7.5 sn). Bu oyuncular senaryoyu daha önce oynamıştı ve metni okumadan geçmiş olabilir; ölçüm, dikkatle ilk kez oynayan oyuncuyu tam temsil etmez.
+- Test oyuncularının çoğu senaryoyu daha önce oynamıştı. Bu yüzden ölçüm, senaryoyla ilk kez karşılaşan oyuncuyu tam temsil etmeyebilir.
 - Test setindeki oyuncuların bir kısmı eğitim setindeki oyuncularla aynı kişiler; ayrım kişiye göre değil oturuma göre.
 - Oyuncular ders arkadaşlarıdır (yazılım mühendisliği öğrencileri). Başka bir kitleye genellenmez.
 - "Yeniden oyna" ile gelen oyunlarda oyuncu senaryoyu bilir ve B'yi bilerek seçebilir (kötü sonu görmek için). `tekrar_oyun` bunu girdi olarak taşır; bu oyunlarda yüksek `p` "risk" değil "keşif" anlamına gelebilir.

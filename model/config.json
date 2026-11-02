@@ -236,7 +236,6 @@
     "sentetik_satir": 300,
     "egitim_aciklama": "Eğitim: 31 gerçek oturum, 93 karar (Veri Toplama Modu, `data/v21_egitim_oturumlari.txt`). Test: eğitimden sonra toplanan 17 gerçek oturum, 51 karar; eğitimde kullanılmadı.",
     "sentetik_aciklama": "v2.1'in eğitiminde kullanılmadı (spec §10.8); yalnız boru hattı denemesi için.",
-    "test_hizli_oturum": 11,
     "test_karar_suresi_medyan": 1.2,
     "egitim_karar_suresi_medyan": 7.5
   },

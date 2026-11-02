@@ -264,7 +264,7 @@ Hepsi sahneye girişte bilinen bilgilerdir. Bu sahnedeki karar süresi ya da ipu
 ## Sınırlar
 
 - Ölçüm küçük bir örneklemde yapıldı. Güven aralığı geniştir (alt ucu yazı-tura düzeyine, 0.50'ye yakın olabilir); tek bir sayıya güvenmeyin.
-- Test setinin {v.get("test_hizli_oturum", 0)}/{v.get("test_oturum", 0)} oturumunda üç karar da 3 saniyenin altında verildi (test karar süresi ortancası {v.get("test_karar_suresi_medyan", 0)} sn, eğitimde {v.get("egitim_karar_suresi_medyan", 0)} sn). Bu oyuncular senaryoyu daha önce oynamıştı ve metni okumadan geçmiş olabilir; ölçüm, dikkatle ilk kez oynayan oyuncuyu tam temsil etmez.
+- Test oyuncularının çoğu senaryoyu daha önce oynamıştı. Bu yüzden ölçüm, senaryoyla ilk kez karşılaşan oyuncuyu tam temsil etmeyebilir.
 - Test setindeki oyuncuların bir kısmı eğitim setindeki oyuncularla aynı kişiler; ayrım kişiye göre değil oturuma göre.
 - Oyuncular ders arkadaşlarıdır (yazılım mühendisliği öğrencileri). Başka bir kitleye genellenmez.
 - "Yeniden oyna" ile gelen oyunlarda oyuncu senaryoyu bilir ve B'yi bilerek seçebilir (kötü sonu görmek için). `tekrar_oyun` bunu girdi olarak taşır; bu oyunlarda yüksek `p` "risk" değil "keşif" anlamına gelebilir.
@@ -316,8 +316,6 @@ def main():
                            f"(Veri Toplama Modu, `data/v21_egitim_oturumlari.txt`). Test: eğitimden sonra toplanan "
                            f"{test['oturum'].nunique()} gerçek oturum, {len(test)} karar; eğitimde kullanılmadı.",
         "sentetik_aciklama": "v2.1'in eğitiminde kullanılmadı (spec §10.8); yalnız boru hattı denemesi için.",
-        # Veri kalitesi: üç kararı da 3 sn'nin altında verilen oturum, metni okumadan geçilmiş olabilir.
-        "test_hizli_oturum": int((test.groupby("oturum")["karar_suresi_sn"].max() < 3).sum()),
         "test_karar_suresi_medyan": round(float(test["karar_suresi_sn"].median()), 1) if len(test) else 0.0,
         "egitim_karar_suresi_medyan": round(float(egitim_gercek["karar_suresi_sn"].median()), 1),
     }
@@ -352,7 +350,7 @@ def main():
         if not OLCUM_KILIDI.exists():
             OLCUM_KILIDI.write_text(json.dumps({
                 "surum": SURUM, "spec": "spec.md §10.8", "test_oturumlari": test_idleri, "metrikler": olcum,
-            }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         egitim, olculen, hedef_dir = egitim_gercek, test, CIKTI / "aday"
 
     kapi_sonucu = olcum["roc_auc"] >= KAPI["roc_auc"] and olcum["recall_b"] >= KAPI["recall_b"]
@@ -368,8 +366,10 @@ def main():
     hedef_dir.mkdir(parents=True)
     fark = onnx_aktar(model, X, hedef_dir / "model.onnx")
     config = config_olustur(veri_ozeti, olcum, kapi_sonucu and fark <= ONNX_TOLERANS, fark, args.gelistirme)
-    (hedef_dir / "config.json").write_text(json.dumps(config, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    (hedef_dir / "README.md").write_text(model_karti(config), encoding="utf-8")
+    # newline="\n": Windows'ta da LF yazılır; Hugging Face'teki ve GitHub'daki dosya bayt bayt aynı kalır.
+    (hedef_dir / "config.json").write_text(json.dumps(config, indent=2, ensure_ascii=False) + "\n",
+                                           encoding="utf-8", newline="\n")
+    (hedef_dir / "README.md").write_text(model_karti(config), encoding="utf-8", newline="\n")
     print(f"ONNX ↔ sklearn en büyük fark: {fark:.2e} (tolerans {ONNX_TOLERANS})")
 
     if fark > ONNX_TOLERANS:
