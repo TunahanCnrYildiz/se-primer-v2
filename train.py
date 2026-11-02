@@ -1,20 +1,25 @@
 """SE Primer v2 — "bu oyuncu bu sahnede B'yi seçecek mi?" modeli: eğit, ölç, kapıdan geçir, paketle.
 
     python train.py               # tek komut: veriyi hazırla → eğit → ölç → kapı → model/
-    python train.py --gelistirme  # gerçek veri yokken boru hattını sentetikle dener → _out/gelistirme (YAYINLANMAZ)
+    python train.py --gelistirme  # boru hattını yalnız sentetikle dener → _out/gelistirme (YAYINLANMAZ)
 
 İlk adımda data/hazirla.py çalışır: data/ham/*.csv (gerçek) + sentetik → data/oturumlar.csv.
 Aynı ham dosyalarla her seferinde bayt bayt aynı dosya üretilir.
 
-Eval kapısı spec §10.4'te, eğitimden önce yazıldı (commit 227eb23):
-  - yalnız gerçek oturumlarda, oturuma göre gruplanmış 5 katlı çapraz doğrulama
-  - ROC-AUC >= 0.65 ve B-duyarlılığı (p >= 0.50) >= 0.60
-  - ONNX ile sklearn olasılık farkı <= 1e-4
+v2.1 (spec §10.8, test verisi gelmeden yazıldı):
+  - eğitim: data/v21_egitim_oturumlari.txt'deki 31 gerçek oturum (sentetik yok)
+  - ölçüm: listede olmayan gerçek oturumlar (bekletilen test seti), bir kez
+  - ön koşul: test setinde >= 15 oturum ve >= 8 B, en geç 4 Kasım 2026 20:00
+  - kapı: ROC-AUC >= 0.65 ve B-duyarlılığı (p >= 0.50) >= 0.60, ONNX ile sklearn farkı <= 1e-4
+  - kilit: ölçülen test seti data/v21_olcum.json'a yazılır; sonra yalnız aynı test setiyle çalışır
+v2.0'ın iki ölçümü (gruplanmış 5 katlı çapraz doğrulama) spec §10.4'te; v2.0 reddedildi.
 Kapıdan geçmeyen model model/ klasörüne yazılmaz; betik sıfırdan farklı kodla çıkar.
 
-Çıkış kodları: 0 geçti · 1 metrik eşiğin altında · 2 veri yetersiz · 3 ONNX sapması
+Çıkış kodları: 0 geçti · 1 metrik eşiğin altında · 2 veri yetersiz / süre doldu · 3 ONNX sapması
+               · 4 test seti kilitli ölçümden farklı
 """
 import argparse
+import datetime as dt
 import hashlib
 import json
 import shutil
@@ -47,14 +52,18 @@ VERI = BURASI / "data" / "oturumlar.csv"
 MODEL_DIR = BURASI / "model"
 CIKTI = BURASI / "_out"
 
+EGITIM_LISTESI = BURASI / "data" / "v21_egitim_oturumlari.txt"
+OLCUM_KILIDI = BURASI / "data" / "v21_olcum.json"
+
 SEED = 13
-SURUM = "2.0"
+SURUM = "2.1"
 KAT = 5
 KARAR_ESIGI = 0.50                                  # p >= bu değer → müdahale (spec §10.3)
 KAPI = {"roc_auc": 0.65, "recall_b": 0.60}          # spec §10.4
 ONNX_TOLERANS = 1e-4
-MIN_GERCEK_OTURUM = 15
-MIN_GERCEK_B = 8
+MIN_TEST_OTURUM = 15                                # spec §10.8
+MIN_TEST_B = 8
+SON_TARIH = dt.datetime(2026, 11, 4, 20, 0, tzinfo=dt.timezone(dt.timedelta(hours=3)))
 BOOTSTRAP = 1000
 
 OZELLIK_TANIMI = {
@@ -174,9 +183,10 @@ def config_olustur(veri_ozeti, olcum, kapi_sonucu, fark, gelistirme) -> dict:
             "required": ["p", "mudahale"],
         },
         "eval": {
-            "method": f"{KAT} katlı StratifiedGroupKFold (oturuma göre), kat dışı tahminler; "
-                      + ("GELİŞTİRME: yalnız sentetik veriyle" if gelistirme
-                         else "ölçüm yalnız gerçek oturumlarda, sentetik yalnız eğitimde"),
+            "method": (f"GELİŞTİRME: {KAT} katlı StratifiedGroupKFold (oturuma göre), yalnız sentetik veriyle"
+                       if gelistirme else
+                       "Bekletilen test seti (spec §10.8): model dondurulmuş eğitim oturumlarıyla eğitildi, "
+                       "eğitimden sonra toplanan ve eğitimde hiç kullanılmayan gerçek oturumlarda bir kez ölçüldü"),
             "gate": {"roc_auc_min": KAPI["roc_auc"], "recall_b_min": KAPI["recall_b"],
                      "onnx_tolerance": ONNX_TOLERANS, "spec": "spec.md §10.4"},
             "passed": kapi_sonucu,
@@ -232,8 +242,8 @@ Hepsi sahneye girişte bilinen bilgilerdir. Bu sahnedeki karar süresi ya da ipu
 
 ## Veri
 
-- Gerçek: {v["gercek_oturum"]} oturum, {v["gercek_satir"]} karar (Veri Toplama Modu, arkadaş oyunları). B oranı %{v["gercek_b_orani"]}.
-- Sentetik: {v["sentetik_oturum"]} oturum, {v["sentetik_satir"]} karar (kurala dayalı üretici + gürültü, tohum {c["seed"]}; kural `data/hazirla.py`'de). Yalnız eğitimde kullanılır, hiçbir ölçüme girmez.
+- {v["egitim_aciklama"]}
+- Sentetik: {v["sentetik_oturum"]} oturum (kurala dayalı üretici, tohum {c["seed"]}; kural `data/hazirla.py`'de). {v["sentetik_aciklama"]}
 - Kişisel veri yok: ad, e-posta, cihaz kimliği, IP, konum toplanmadı; oturum kimliği rastgele.
 - Veri dosyası SHA-256: `{v["sha256"]}`
 
@@ -256,7 +266,8 @@ Hepsi sahneye girişte bilinen bilgilerdir. Bu sahnedeki karar süresi ya da ipu
 - Ölçüm küçük bir örneklemde yapıldı. Güven aralığı geniştir; tek bir sayıya güvenmeyin.
 - Oyuncular ders arkadaşlarıdır (yazılım mühendisliği öğrencileri). Başka bir kitleye genellenmez.
 - "Yeniden oyna" ile gelen oyunlarda oyuncu senaryoyu bilir ve B'yi bilerek seçebilir (kötü sonu görmek için). `tekrar_oyun` bunu girdi olarak taşır; bu oyunlarda yüksek `p` "risk" değil "keşif" anlamına gelebilir.
-- Sentetik üreticinin kuralı modelin öğrendiğini etkiler. Bu yüzden ölçüm yalnız gerçek veride yapılır.
+- Sentetik üreticinin varsayımı gerçek veriyle çelişti (tekrar oyunlarda oyuncular neredeyse hep A seçti); v2.1'de sentetik veri eğitimden çıkarıldı.
+- Bir önceki sürüm (v2.0) iki ölçümde de kapıyı geçemedi (ROC-AUC 0.618 ve 0.643) ve reddedildi; ayrıntı `RELEASE.md`.
 - Model nedensellik söylemez: B seçimini *öngörür*, nedenini açıklamaz.
 
 ## Kullanılmaması gereken durumlar
@@ -289,36 +300,62 @@ def main():
     hazirla.main()  # data/ham/*.csv + sentetik → data/oturumlar.csv
     veri = pd.read_csv(VERI, dtype={"oturum": str})
     gercek, sentetik = veri[veri["kaynak"] == "gercek"], veri[veri["kaynak"] == "sentetik"]
+    egitim_idleri = {s.strip() for s in EGITIM_LISTESI.read_text(encoding="utf-8").splitlines()
+                     if s.strip() and not s.startswith("#")}
+    egitim_gercek = gercek[gercek["oturum"].isin(egitim_idleri)]
+    test = gercek[~gercek["oturum"].isin(egitim_idleri)]
     veri_ozeti = {
         "file": "data/oturumlar.csv",
         "sha256": hashlib.sha256(VERI.read_bytes()).hexdigest(),
-        "gercek_oturum": int(gercek["oturum"].nunique()), "gercek_satir": int(len(gercek)),
-        "gercek_b_orani": round(100 * float(gercek[HEDEF].mean()), 1) if len(gercek) else 0.0,
+        "egitim_oturum": int(egitim_gercek["oturum"].nunique()), "egitim_satir": int(len(egitim_gercek)),
+        "test_oturum": int(test["oturum"].nunique()), "test_satir": int(len(test)), "test_b": int(test[HEDEF].sum()),
         "sentetik_oturum": int(sentetik["oturum"].nunique()), "sentetik_satir": int(len(sentetik)),
+        "egitim_aciklama": f"Eğitim: {egitim_gercek['oturum'].nunique()} gerçek oturum, {len(egitim_gercek)} karar "
+                           f"(Veri Toplama Modu, `data/v21_egitim_oturumlari.txt`). Test: eğitimden sonra toplanan "
+                           f"{test['oturum'].nunique()} gerçek oturum, {len(test)} karar; eğitimde kullanılmadı.",
+        "sentetik_aciklama": "v2.1'in eğitiminde kullanılmadı (spec §10.8); yalnız boru hattı denemesi için.",
     }
-    print(f"veri: {veri_ozeti['gercek_oturum']} gerçek oturum ({len(gercek)} satır, "
-          f"{int(gercek[HEDEF].sum())} B), {veri_ozeti['sentetik_oturum']} sentetik oturum")
+    print(f"veri: eğitim {veri_ozeti['egitim_oturum']} gerçek oturum · test {veri_ozeti['test_oturum']} oturum "
+          f"({veri_ozeti['test_b']} B) · {veri_ozeti['sentetik_oturum']} sentetik oturum")
 
     if args.gelistirme:
-        degerlendirme, ek_egitim, hedef_dir = sentetik, sentetik.iloc[0:0], CIKTI / "gelistirme"
+        veri_ozeti["egitim_aciklama"] = f"Yalnız sentetik: {len(sentetik)} karar (geliştirme denemesi)."
+        veri_ozeti["sentetik_aciklama"] = "Geliştirme denemesinde hem eğitim hem ölçüm."
         print("! GELİŞTİRME: ölçüm sentetik veride, çıktı yayınlanmaz")
+        p = capraz_dogrulama(sentetik, sentetik.iloc[0:0])
+        olcum = metrikler(sentetik[HEDEF].to_numpy(), p, sentetik["oturum"].to_numpy())
+        egitim, olculen, hedef_dir = sentetik, sentetik, CIKTI / "gelistirme"
     else:
-        if gercek["oturum"].nunique() < MIN_GERCEK_OTURUM or gercek[HEDEF].sum() < MIN_GERCEK_B:
-            print(f"✗ veri yetersiz: en az {MIN_GERCEK_OTURUM} gerçek oturum ve {MIN_GERCEK_B} gerçek B gerekli "
-                  "(spec §10.4). Model üretilmedi.")
+        test_idleri = sorted(test["oturum"].unique())
+        if OLCUM_KILIDI.exists():
+            kilit = json.loads(OLCUM_KILIDI.read_text(encoding="utf-8"))
+            if kilit["test_oturumlari"] != test_idleri:
+                print("✗ v2.1 bir kez ölçüldü ve test seti o ölçümden farklı (spec §10.8). Yeniden ölçülmez.")
+                sys.exit(4)
+            print("! v2.1 ölçümü kilitli: aynı test setiyle sonuç yeniden üretiliyor")
+        elif dt.datetime.now(dt.timezone.utc) > SON_TARIH:
+            print("✗ son tarih (4 Kasım 2026 20:00) geçti, v2.1 ölçülmedi (spec §10.8). v2.0'ın reddi geçerli.")
             sys.exit(2)
-        degerlendirme, ek_egitim, hedef_dir = gercek, sentetik, CIKTI / "aday"
+        if len(test_idleri) < MIN_TEST_OTURUM or test[HEDEF].sum() < MIN_TEST_B:
+            print(f"✗ test seti yetersiz: en az {MIN_TEST_OTURUM} yeni oturum ve {MIN_TEST_B} B gerekli, "
+                  f"şu an {len(test_idleri)} oturum ve {int(test[HEDEF].sum())} B (spec §10.8). Ölçüm yapılmadı.")
+            sys.exit(2)
+        model_test = yeni_model().fit(egitim_gercek[OZELLIKLER].to_numpy(float), egitim_gercek[HEDEF].to_numpy())
+        p = model_test.predict_proba(test[OZELLIKLER].to_numpy(float))[:, 1]
+        olcum = metrikler(test[HEDEF].to_numpy(), p, test["oturum"].to_numpy())
+        if not OLCUM_KILIDI.exists():
+            OLCUM_KILIDI.write_text(json.dumps({
+                "surum": SURUM, "spec": "spec.md §10.8", "test_oturumlari": test_idleri, "metrikler": olcum,
+            }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        egitim, olculen, hedef_dir = egitim_gercek, test, CIKTI / "aday"
 
-    p = capraz_dogrulama(degerlendirme, ek_egitim)
-    olcum = metrikler(degerlendirme[HEDEF].to_numpy(), p, degerlendirme["oturum"].to_numpy())
     kapi_sonucu = olcum["roc_auc"] >= KAPI["roc_auc"] and olcum["recall_b"] >= KAPI["recall_b"]
     print(f"ölçüm: ROC-AUC {olcum['roc_auc']} (GA95 {olcum['roc_auc_ga95']}), "
           f"B-duyarlılığı {olcum['recall_b']}, B-kesinliği {olcum['precision_b']}, doğruluk {olcum['accuracy']}")
 
-    # Son model: bütün eğitim verisiyle (gerçek + sentetik; geliştirmede yalnız sentetik).
-    egitim = pd.concat([degerlendirme, ek_egitim])
-    X = egitim[OZELLIKLER].to_numpy(float)
-    model = yeni_model().fit(X, egitim[HEDEF].to_numpy())
+    # Yayınlanacak model: yalnız eğitim verisiyle (v2.1'de 31 gerçek oturum; geliştirmede sentetik).
+    model = yeni_model().fit(egitim[OZELLIKLER].to_numpy(float), egitim[HEDEF].to_numpy())
+    X = pd.concat([egitim, olculen])[OZELLIKLER].to_numpy(float)  # ONNX karşılaştırması için
 
     if hedef_dir.exists():
         shutil.rmtree(hedef_dir)

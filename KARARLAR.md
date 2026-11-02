@@ -205,3 +205,10 @@ Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Ner
 - **Gerekçe:** Her yeni partide yeniden ölçmek (optional stopping), şans eseri geçen bir ölçümü "sonuç" saymaya götürür. Ölçüm sayısını önceden sınırlamak bunu engeller.
 - **Vazgeçilen:** Eşiği düşürmek, sentetik üreticiyi gerçek veriye göre düzeltmek (ilk ölçümde tekrar oyunların neredeyse hep A seçtiği görüldü, sentetik varsayımın tersi), her partide ölçmek. Hepsi ölçümü sonuca göre eğmek olurdu.
 - **Nerede:** [spec.md §10.4](spec.md#104-eval-kapısı-kabul-kriteri)
+
+### K-37 · v2.1: dondurulmuş eğitim seti, bekletilen test setiyle tek ölçüm
+- **Bağlam:** v2.0 ikinci ve son ölçümde de geçemedi (ROC-AUC 0.643, B-duyarlılığı 0.579) ve reddedildi. Arkadaşlardan hâlâ veri gelecekti.
+- **Karar:** Yeni sürüm v2.1, 2 Kasım'daki 31 gerçek oturumla eğitilir ve **yalnız bundan sonra gelen** oturumlarda bir kez ölçülür (≥ 15 oturum ve ≥ 8 B, en geç 4 Kasım 20:00). Sentetik veri eğitimden çıkarıldı. Kapı aynı. `train.py` ölçülen test setini kilitler, farklı bir test setiyle yeniden ölçmeyi reddeder.
+- **Gerekçe:** v2.0'ın verisini yeniden ölçmek optional stopping olurdu. Model hiç görmediği verilerle bir kez sınandığında, veriyi gördükten sonra yapılan değişiklik (sentetik verinin çıkarılması) da meşru biçimde test edilmiş olur.
+- **Vazgeçilen:** v2.0'ın ölçümlerini "deneme" saymak ya da kayıttan çıkarmak (sonucu gizlemek olurdu); eşiği düşürmek; sentetik üreticiyi gerçek veriye göre ayarlayıp eğitimde tutmak (aynı veriyle doğrulanamazdı).
+- **Nerede:** [spec.md §10.8](spec.md#108-v21-bağımsız-test-setiyle-tek-ölçüm) · [data/v21_egitim_oturumlari.txt](data/v21_egitim_oturumlari.txt) · [train.py](train.py)

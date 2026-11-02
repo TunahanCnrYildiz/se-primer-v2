@@ -1,0 +1,33 @@
+# v2.1 eğitim seti: 2 Kasım 2026'da data/ham'daki 31 gerçek oturum (spec §10.8).
+# Bu listede olmayan her gerçek oturum v2.1'in bekletilen test setidir.
+0bf810c6
+10b1e086
+179aa183
+2777ffbd
+27e9d7d5
+30f3e637
+37f9d80f
+4555d05a
+4ddf54da
+51a1128e
+6c54f1e9
+8a0bb4de
+8aedaf82
+8b9d3da0
+99c46cfb
+9fef1e12
+a8f2d93a
+b617ef3b
+bf9900a0
+c0d371e1
+c14dac8f
+c85db06d
+cca5406f
+cf216420
+cf6937ae
+dec5e9e1
+ec5ab669
+ef2693cd
+f1b2d120
+f63e7faf
+fa63f2f5

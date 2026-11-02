@@ -1,6 +1,8 @@
 # SE Primer — Spesifikasyon
 
-> Sürüm: 2.2 · Tarih: 2 Kasım 2026 · İlk ölçüm kapıyı geçemedi; ikinci ve son ölçümün koşulu, ölçümden önce yazıldı (§10.4). **Eşik, girdiler ve yöntem değişmedi.**
+> Sürüm: 2.3 · Tarih: 2 Kasım 2026 · v2.0 iki ölçümde de kapıyı geçemedi ve reddedildi. Yeni sürüm v2.1, yalnız bundan sonra toplanacak oturumlardan oluşan bağımsız bir test setiyle bir kez ölçülecek; kural test verisi gelmeden yazıldı (§10.8). **Eşik değişmedi.**
+>
+> Sürüm 2.2 (2 Kasım 2026): İlk ölçüm kapıyı geçemedi; ikinci ve son ölçümün koşulu, ölçümden önce yazıldı (§10.4).
 >
 > Sürüm 2.1 (1 Kasım 2026): Gerçek veri toplanmadan önce 3 girdi eklendi ve kapı geçilemezse ne olacağı yazıldı (§10.2, §10.4).
 >
@@ -380,6 +382,7 @@ Bu bölüm **eğitimden önce** yazıldı. Eşiği geçmeyen model yayınlanmaz:
 - **Koşul:** En az 30 gerçek oturum ya da 4 Kasım 2026 20:00, hangisi önce gelirse. O andaki bütün gerçek veriyle, aynı kapı (ROC-AUC ≥ 0.65, B-duyarlılığı ≥ 0.60), aynı yöntem, aynı girdiler ve aynı sentetik üretici.
 - **Sonuç bağlayıcıdır:** Geçilirse v2.0 yayınlanır. Geçilemezse v2.0 reddedilmiş olarak teslim edilir: Hugging Face'e yükleme yapılmaz, uygulama v1 kurallarıyla çalışır, iki ölçüm de `RELEASE.md`'de raporlanır. Bu sürümde üçüncü ölçüm yapılmaz.
 - **Şeffaflık notu:** Bu koşul, ikinci ölçümde kullanılacak son 14 oturum gelmeden önce önerildi; dosyalar geldikten sonra, ölçüm yapılmadan commit'lendi. O sırada 31 oturum vardı, yani koşul commit anında sağlanmıştı.
+- **İkinci ölçüm (2 Kasım 2026, 31 gerçek oturum, 16 kişi, 19 B):** ROC-AUC 0.643 (%95 GA 0.44–0.82), B-duyarlılığı 0.579. Kapı geçilemedi. **v2.0 reddedildi**; bu sürüm için başka ölçüm yapılmaz. Devamı: §10.8 (v2.1).
 
 ### 10.5 Veri Toplama Modu (gölge mod)
 
@@ -411,3 +414,15 @@ Bu bölüm **eğitimden önce** yazıldı. Eşiği geçmeyen model yayınlanmaz:
 - **O zaman:** Oyuncuya hata gösterilmez. Her sahnede `data-cy="p"` alanı `—` gösterir ve v1 kuralları geçerlidir. Oyun 8 yoldan birinin saatine ve sonuna ulaşır.
 
 **Test notu:** KÖ-9 ve KÖ-10 *davranışı* test eder. Bu yüzden Cypress'te model kararı bir test kancasıyla sabitlenir (gerçek modelin hangi girdide eşiği geçeceği eğitime bağlıdır). Modelin *sayısal doğruluğu* ayrı test edilir: Parite testi aynı 5 referans girdiyi uygulamanın model test panelinden geçirir ve `data-cy="p"` değerini `tests/parite.json`'daki Python olasılığıyla karşılaştırır (|Δ| < 1e-4).
+
+### 10.8 v2.1: bağımsız test setiyle tek ölçüm
+
+Bu bölüm v2.1'in test verisi toplanmadan önce yazıldı. v2.0'ın iki ölçümü ve reddi §10.4'te kayıtlı ve geçerli kalır.
+
+- **Eğitim seti (dondurulmuş):** 2 Kasım 2026'da `data/ham/`'daki 31 gerçek oturum. Liste: [data/v21_egitim_oturumlari.txt](data/v21_egitim_oturumlari.txt). Model yalnız bu oturumlarla eğitilir ve yayınlanacaksa **bu model** yayınlanır.
+- **Test seti (bekletilen):** Bu listede olmayan, bundan sonra Veri Toplama Modu'ndan gelen bütün gerçek oturumlar. Model bunları eğitimde hiç görmez. Test setinin hiçbir oturumu eğitime alınmaz.
+- **Değişiklik:** Sentetik veri v2.1'in eğitiminden çıkarıldı. Gerekçe: v2.0'ın ilk ölçümünde, tekrar oyunlarda oyuncuların neredeyse hep A seçtiği görüldü; sentetik üretici bunun tersini (tekrar oyunda daha çok B) varsayıyordu. Bu değişiklik veri görüldükten sonra yapıldığı için yalnız yeni toplanan test verisiyle sınanır. Girdiler (11), model türü, sınıf ağırlığı ve karar eşiği (0.50) aynı.
+- **Kapı:** Aynı. Test setinde ROC-AUC ≥ 0.65 ve B-duyarlılığı ≥ 0.60; ONNX ile sklearn farkı ≤ 1e-4. Güven aralığı test oturumları üzerinden bootstrap ile raporlanır.
+- **Ne zaman ve kaç kez:** Ölçüm **bir kez** yapılır: test setinde en az 15 oturum ve en az 8 B toplandığı ilk anda; en geç 4 Kasım 2026 20:00'de. O saate kadar ön koşul sağlanmazsa v2.1 ölçülmez ve v2.0'ın reddi geçerli kalır. Ölçüm başlatılmadan önce ön koşulu sağlayıp sağlamadığına yalnız oturum ve B **sayısıyla** bakılır, modelin başarısına bakılmaz.
+- **Kilit:** `train.py` ölçümü yaptığında test setindeki oturumları `data/v21_olcum.json`'a yazar. Sonra yalnız aynı test setiyle (sonucu birebir yeniden üretmek için) çalışır; test seti değişmişse ölçmeyi reddeder.
+- **Sonuç bağlayıcıdır:** Geçilirse v2.1 yayınlanır (Hugging Face, `v2.1` etiketi). Geçilemezse v2.1 de reddedilir, uygulama v1 kurallarıyla çalışır ve üç ölçüm de `RELEASE.md`'de raporlanır.
