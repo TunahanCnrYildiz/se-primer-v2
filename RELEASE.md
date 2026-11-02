@@ -1,17 +1,19 @@
 # Sürüm notları ve dağıtım kararı
 
-## v2.1 · 2 Kasım 2026 · yayında
+## v2.1.1 · 2 Kasım 2026 · yayında
+
+Yalnız model kartı düzeltmesi: `model.onnx` ve `config.json`, v2.1 (`7468f86b`) ile bayt bayt aynı. Kartta doğrulanmamış iki cümle vardı (oyuncuların hepsinin yazılım mühendisliği öğrencisi olduğu; tekrar oyunda B'nin bilerek seçilebileceği) ve gerçek duruma göre düzeltildi. Yayınlanmış `v2.1` etiketi taşınmadı, eski commit'te olduğu gibi duruyor; düzeltme yeni bir yama etiketi aldı.
 
 | | |
 |---|---|
 | Model reposu | https://huggingface.co/TunahanCnr/se-primer-v2 |
-| Commit | [`7468f86b263b779b55c05f11735eb80f08f6618f`](https://huggingface.co/TunahanCnr/se-primer-v2/tree/7468f86b263b779b55c05f11735eb80f08f6618f) (`model/yayin.json`) |
-| Etiket | `v2.1` |
-| Commit'e sabit model URL'si | `https://huggingface.co/TunahanCnr/se-primer-v2/resolve/7468f86b263b779b55c05f11735eb80f08f6618f/model.onnx` |
+| Commit | [`37e4ea00f12003733abb01bdf9d0e020b7c1977a`](https://huggingface.co/TunahanCnr/se-primer-v2/tree/37e4ea00f12003733abb01bdf9d0e020b7c1977a) (`model/yayin.json`) |
+| Etiket | `v2.1.1` (`v2.1` → `7468f86b`, aynı model) |
+| Commit'e sabit model URL'si | `https://huggingface.co/TunahanCnr/se-primer-v2/resolve/37e4ea00f12003733abb01bdf9d0e020b7c1977a/model.onnx` |
 | Eğitim verisi | 31 gerçek oturum (93 karar), [`data/v21_egitim_oturumlari.txt`](data/v21_egitim_oturumlari.txt). Sentetik veri kullanılmadı |
 | Test verisi | Eğitimden sonra toplanan 17 gerçek oturum (51 karar, 11 B); eğitimde hiç kullanılmadı, bir kez ölçüldü ([`data/v21_olcum.json`](data/v21_olcum.json)) |
 | Eval kapısı (spec §10.8) | ROC-AUC **0.715** (%95 GA 0.50–0.85) ≥ 0.65 ✓ · B-duyarlılığı **0.818** ≥ 0.60 ✓ · B-kesinliği 0.375 · müdahale oranı 0.47 → **GEÇTİ** |
-| Uygulama | https://se-primer-v2.ai.studio · `MODEL_COMMIT = '7468f86b…'` (AI Studio Prompt 4) |
+| Uygulama | https://se-primer-v2.ai.studio · `MODEL_COMMIT = '37e4ea00…'` (AI Studio Prompt 5; v2.1'de `7468f86b`, Prompt 4) |
 | Sunucu | https://se-primer-v2-api.onrender.com · `MODEL_COMMIT` aynı (Render, ücretsiz plan) |
 
 ### Ne değişti (v1 → v2.1)

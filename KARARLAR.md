@@ -218,3 +218,10 @@ Her kayıt: **Karar** · **Bağlam** · **Gerekçe** · **Vazgeçilen** · **Ner
 - **Karar:** ROC-AUC 0.715 (%95 GA 0.50–0.85), B-duyarlılığı 0.818 → geçti. Model Hugging Face'e yüklendi (commit `7468f86b`, etiket `v2.1`), uygulama (`MODEL_COMMIT`) ve sunucu (Render) aynı commit'e bağlandı.
 - **Gerekçe:** Sonuç, önceden yazılmış kurala göre bağlayıcı. Model kartına sınırlar yazıldı: güven aralığının alt ucu 0.50'ye iniyor, test oyuncularının çoğu senaryoyu daha önce oynamıştı ve bir kısmı eğitimdeki oyuncularla aynı kişiler.
 - **Nerede:** [RELEASE.md](RELEASE.md) · [model/README.md](model/README.md)
+
+### K-39 · Model kartı düzeltmesi yama sürümü olarak (v2.1.1), etiket taşınmadan
+- **Bağlam:** Teslim öncesi son kontrolde model kartında doğrulanmamış iki cümle bulundu: oyuncuların hepsinin yazılım mühendisliği öğrencisi olduğu (değil, karışık) ve tekrar oyunda B'nin bilerek seçilebileceği (gerçek veride tersi görüldü). Kart Hugging Face'te yayındaydı.
+- **Karar:** Kart düzeltildi ve yeni bir commit olarak yayınlandı (`37e4ea00`, etiket `v2.1.1`). `model.onnx` ve `config.json` değişmedi; `yayinla.py --belge-duzeltmesi` bunu yüklemeden önce doğrular. Uygulama ve sunucu yeni commit'e geçti.
+- **Gerekçe:** Yayınlanmış bir sürüm etiketini (`v2.1`) taşımak, ona güvenen herkesin altındaki içeriği sessizce değiştirmek olurdu. Etiketler değişmez kalır; yalnız belgesi değişen bir yayın yama numarası alır.
+- **Vazgeçilen:** `v2.1` etiketini yeni commit'e taşımak; kartı yalnız GitHub'da düzeltip Hugging Face'teki yanlış kartı bırakmak.
+- **Nerede:** [RELEASE.md](RELEASE.md) · [yayinla.py](yayinla.py)
