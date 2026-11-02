@@ -2,3 +2,5 @@
 *.csv  text eol=lf
 *.json text eol=lf
 *.onnx binary
+# Yayınlanan model dosyaları: Hugging Face ile bayt bayt aynı kalmalı.
+model/** -text
