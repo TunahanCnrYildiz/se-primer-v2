@@ -48,6 +48,9 @@ def kontrol_et() -> dict:
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--kuru", action="store_true", help="yalnız kontrol et, yükleme")
+    ap.add_argument("--belge-duzeltmesi", metavar="ACIKLAMA",
+                    help="aynı sürümün yalnız belgesi değişti: model.onnx yayınlananla aynı olmalı; "
+                         "yeni commit bir yama etiketi alır (ör. v2.1 → v2.1.1), eski etiketler değişmez")
     args = ap.parse_args()
 
     config = kontrol_et()
@@ -65,12 +68,26 @@ def main():
         print("✓ kuru çalıştırma: hiçbir şey yüklenmedi")
         return
 
+    onceki = None
+    if args.belge_duzeltmesi:
+        # Model değişmişse bu bir belge düzeltmesi değil, yeni sürümdür.
+        onceki = json.loads(YAYIN.read_text(encoding="utf-8"))
+        if onceki["sha256"]["model.onnx"] != sha256((MODEL_DIR / "model.onnx").read_bytes()):
+            sys.exit("✗ model.onnx yayınlanandan farklı: belge düzeltmesi değil, yeni sürüm gerekir")
+        # Yayınlanmış etiketler taşınmaz; belge düzeltmesi bir yama numarası alır.
+        parcalar = onceki["tag"].lstrip("v").split(".")
+        yama = int(parcalar[2]) + 1 if len(parcalar) > 2 else 1
+        etiket = f"v{parcalar[0]}.{parcalar[1]}.{yama}"
+        mesaj = f"{etiket}: belge düzeltmesi ({args.belge_duzeltmesi}); model.onnx {onceki['commit'][:8]} ile aynı"
+    else:
+        mesaj = f"{etiket}: eval kapısından geçen model (ROC-AUC {config['eval']['metrics']['roc_auc']})"
+
     api.create_repo(repo, repo_type="model", private=False, exist_ok=True)
     bilgi = api.upload_folder(repo_id=repo, repo_type="model", folder_path=MODEL_DIR,
-                              allow_patterns=DOSYALAR,
-                              commit_message=f"{etiket}: eval kapısından geçen model "
-                                             f"(ROC-AUC {config['eval']['metrics']['roc_auc']})")
+                              allow_patterns=DOSYALAR, commit_message=mesaj)
     commit = bilgi.oid
+    if onceki:
+        print(f"  yeni etiket {etiket} → {commit[:8]}; {onceki['tag']} → {onceki['commit'][:8]} olduğu gibi kalır")
     api.create_tag(repo, tag=etiket, revision=commit, tag_message=f"SE Primer {etiket}")
     taban = f"https://huggingface.co/{repo}/resolve/{commit}/"
     print(f"✓ yüklendi: commit {commit}")
@@ -96,6 +113,9 @@ def main():
         "config_url": taban + "config.json",
         "sha256": ozetler,
     }
+    if onceki:
+        yayin["onceki_commitler"] = onceki.get("onceki_commitler", []) + [
+            {"commit": onceki["commit"], "neden_degisti": args.belge_duzeltmesi}]
     YAYIN.write_text(json.dumps(yayin, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print(f"✓ {YAYIN.relative_to(BURASI)} yazıldı")
     print(f"\nSıradaki adımlar:\n  1) AI Studio: MODEL_COMMIT = '{commit}'\n"
