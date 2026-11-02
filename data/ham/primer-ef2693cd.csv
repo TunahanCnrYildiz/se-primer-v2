@@ -1,0 +1,4 @@
+surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,oyun_no,giris_sn,giris_degisiklik,kaynak
+2.1-veri,ef2693cd,1,2,backend,architecture,2.9,0,0,B,0,0.8,2,2.7,1,gercek
+2.1-veri,ef2693cd,2,2,backend,architecture,4.9,0,0,A,0,0.6,2,2.7,1,gercek
+2.1-veri,ef2693cd,3,2,backend,architecture,5.2,0,0,A,0,1.0,2,2.7,1,gercek
