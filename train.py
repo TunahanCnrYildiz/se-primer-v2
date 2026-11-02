@@ -383,9 +383,20 @@ def main():
         print(f"✓ geliştirme çıktısı {hedef_dir.relative_to(BURASI)}'da (yayınlanmaz)")
         return
 
+    # Yayın kaydı (yayinla.py yazar) yalnız aynı model için geçerlidir: yeniden üretilen model
+    # yayınlananla bayt bayt aynıysa korunur, değilse silinir (yeni model henüz yayınlanmadı).
+    yayin = MODEL_DIR / "yayin.json"
+    yayin_kaydi = yayin.read_bytes() if yayin.exists() else None
     if MODEL_DIR.exists():
         shutil.rmtree(MODEL_DIR)
     shutil.copytree(hedef_dir, MODEL_DIR)
+    if yayin_kaydi:
+        yayinlanan = json.loads(yayin_kaydi)["sha256"]["model.onnx"]
+        if yayinlanan == hashlib.sha256((MODEL_DIR / "model.onnx").read_bytes()).hexdigest():
+            yayin.write_bytes(yayin_kaydi)
+            print(f"  yayın kaydı korundu: model Hugging Face'teki {json.loads(yayin_kaydi)['tag']} ile aynı")
+        else:
+            print("  ! model değişti: yayın kaydı silindi, yeni model `python yayinla.py` ile yayınlanmalı")
     print(f"✓ KAPI GEÇİLDİ → {MODEL_DIR.relative_to(BURASI)}/ (model.onnx, config.json, README.md)")
 
 
