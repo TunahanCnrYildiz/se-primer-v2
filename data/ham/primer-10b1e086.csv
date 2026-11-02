@@ -1,0 +1,4 @@
+surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,oyun_no,giris_sn,giris_degisiklik,kaynak
+2.1-veri,10b1e086,1,1,backend,testing,1.6,0,0,A,0,2.8,2,5.4,1,gercek
+2.1-veri,10b1e086,2,1,backend,testing,3.0,0,0,A,0,1.5,2,5.4,1,gercek
+2.1-veri,10b1e086,3,1,backend,testing,4.8,0,0,A,0,1.0,2,5.4,1,gercek

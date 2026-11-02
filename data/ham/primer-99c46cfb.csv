@@ -1,0 +1,4 @@
+surum,oturum,sahne_no,seviye,rol,hedef,karar_suresi_sn,ipucu_acti,tutor_mesaj,secim,sure_doldu,aciklama_sn,oyun_no,giris_sn,giris_degisiklik,kaynak
+2.1-veri,99c46cfb,1,0,qa,architecture,5.3,1,0,B,0,1.0,1,7.0,1,gercek
+2.1-veri,99c46cfb,2,0,qa,architecture,9.2,1,0,A,0,1.1,1,7.0,1,gercek
+2.1-veri,99c46cfb,3,0,qa,architecture,5.5,1,0,B,0,1.8,1,7.0,1,gercek
