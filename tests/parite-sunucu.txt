@@ -1,6 +1,6 @@
 # Bonus: sunucu tüketicisi (Render, FastAPI) ↔ Python oracle
 # Komut: python tests/parite.py --sunucu https://se-primer-v2-api.onrender.com
-# Tarih: 2026-11-02 14:11 +0300
+# Tarih: 2026-11-02 15:16 +0300 · sunucu: se-primer-v2@37e4ea00f12003733abb01bdf9d0e020b7c1977a
 
 ✓ K1 · yeni başlayan, ilk oyun, girişte acele etmedi
     oracle 0.796952 · python 0.796952 (|Δ| 2.4e-09) · sunucu 0.796951 (|Δ| 5.7e-08)
