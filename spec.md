@@ -50,6 +50,11 @@ Yazılım mühendisliği öğrencileri geri alma (rollback), test ve kişisel ve
 
 B7, arkadaş testinden sonra eklendi. Spec'in ilk sürümündeki başarı ölçütü ("oyuncu her kararın nedenini kendi cümleleriyle açıklayabilecek durumda") bunu zaten amaçlıyordu, ama B6 yalnızca gösterilmesini ölçüyordu.
 
+**v2 ölçümü (2 Kasım 2026):**
+- ❌ → ✅ **B8:** v2.0 iki ölçümde kapıyı geçemedi ve reddedildi (ROC-AUC 0.618 ve 0.643). v2.1, eğitimde hiç görmediği 17 oturumda bir kez ölçüldü: ROC-AUC 0.715 (%95 GA 0.50–0.85), B-duyarlılığı 0.818. Ayrıntı ve sınırlar: §10.4, §10.8, [RELEASE.md](RELEASE.md).
+- ✅ **B9:** 5 referans girdide tarayıcı ↔ Python en büyük fark 2.7e-8, sunucu (Render) ↔ Python 8.7e-8, sklearn ↔ ONNX 8.1e-8.
+- ✅ **B10:** v1'in 28 E2E testi 28/28 (model kararı `p = 0` ile sabit); 8 yol gerçek modelle 8/8; toplam `npm test` 41/41.
+
 ### Hedef kullanıcı
 
 - Yazılım mühendisliği öğrencileri ve yeni mezun geliştiriciler

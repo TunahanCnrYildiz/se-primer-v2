@@ -31,7 +31,7 @@ npm --prefix app install
 | Python oracle | `python tests/parite.py` | 5 referans girdiyi commit'e sabit modelle hesaplar, `tests/parite.json` ile karşılaştırır (`--sunucu <adres>` ile sunucuyu da) |
 | Uygulama | `npm --prefix app run dev` | http://localhost:3000. Gemini anahtarı yoksa tutor sabit ipuçlarına düşer |
 | E2E testler | `npm test` (uygulama açıkken) | Regresyon (v1'in 28 testi) + 8 yol gerçek modelle + KÖ-9/10/11, gölge mod + parite |
-| Sunucu | `cd sunucu && uvicorn app:app` | `POST /predict` (Render'da `render.yaml` ile) |
+| Sunucu | `cd sunucu && uvicorn app:app` | `POST /predict`. Modeli seçmek için önce ortam değişkeni: `MODEL_COMMIT=7468f86b…` (Hugging Face'ten) ya da `MODEL_YOL=../model` (yerel). Render'da `render.yaml` ile |
 
 ## Uçtan uca akış
 
