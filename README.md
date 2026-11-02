@@ -6,7 +6,7 @@
 |---|---|
 | ▶️ **Uygulama** (telefonda aç, giriş gerekmez) | https://se-primer-v2.ai.studio |
 | 🤗 **Model v2.1** (Hugging Face, commit'e sabit) | https://huggingface.co/TunahanCnr/se-primer-v2/tree/7468f86b263b779b55c05f11735eb80f08f6618f |
-| 🎬 **Demo videosu** (73 sn) | ⏳ DOLDURULACAK: Drive bağlantısı · repoda: [demo-video/demo.cy.js.mp4](demo-video/demo.cy.js.mp4). Yayındaki uygulamada, Cypress'in oynattığı iki oyuncu profili, aynı sahnede (Karar 2): tutor'a danışan oyuncuya model `p = 0.155` verir ve dokunmaz; danışmadan hızla B seçen oyuncuya `p = 0.800` verir, sayaç kalkar, "dur ve düşün" kartı çıkar ([demo-p.json](demo-video/demo-p.json)) |
+| 🎬 **Demo videosu** (73 sn) | https://drive.google.com/file/d/10N0jPqHg_A91hXJmHYxBhaEqllDIGC6B/view · repoda: [demo-video/demo.cy.js.mp4](demo-video/demo.cy.js.mp4). Yayındaki uygulamada, Cypress'in oynattığı iki oyuncu profili, aynı sahnede (Karar 2): tutor'a danışan oyuncuya model `p = 0.155` verir ve dokunmaz; danışmadan hızla B seçen oyuncuya `p = 0.800` verir, sayaç kalkar, "dur ve düşün" kartı çıkar ([demo-p.json](demo-video/demo-p.json)) |
 | 📦 **Sürüm notları, dağıtım kararı, geri alma** | [RELEASE.md](RELEASE.md) |
 | 🖥️ **Sunucu tüketicisi** (bonus) | https://se-primer-v2-api.onrender.com (`POST /predict`; ücretsiz plan, ilk istekte uyanması sürebilir) |
 
